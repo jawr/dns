@@ -12,10 +12,11 @@ import (
 )
 
 type Parser struct {
-	scanner *bufio.Scanner
-	tld     *tld.TLD
-	ttl     uint
-	origin  string
+	scanner   *bufio.Scanner
+	tld       *tld.TLD
+	ttl       uint
+	origin    string
+	lineCount uint
 }
 
 type Record struct {
@@ -54,13 +55,13 @@ func (p *Parser) SetupGunzipFile(filename string) error {
 func (p *Parser) Parse() error {
 	defer un(trace())
 	log.Println("Starting parse")
-	count := 0
 	var previous string
+	p.lineCount = 0
 	for p.scanner.Scan() {
-		if count > 2000 {
-			break
-		}
-		count++
+		//if count > 2000 {
+		//	break
+		//}
+		p.lineCount++
 		line := strings.ToLower(p.scanner.Text())
 		if len(line) == 0 {
 			continue
@@ -132,7 +133,7 @@ func (p *Parser) handleLine(line string) {
 		panic(".")
 		return
 	}
-	log.Println(record)
+	log.Printf("%d -> %s", p.lineCount, record)
 }
 
 func parseARecord(name, recordType, addr string, ttl uint) {
