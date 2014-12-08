@@ -2,6 +2,8 @@ package parser
 
 import (
 	"bufio"
+	"github.com/jawr/dns/database/bulk"
+	"github.com/jawr/dns/database/domain"
 	"github.com/jawr/dns/database/tld"
 	"log"
 	"strconv"
@@ -9,22 +11,29 @@ import (
 )
 
 type Parser struct {
-	scanner     *bufio.Scanner
-	tld         tld.TLD
-	ttl         uint
-	origin      string
-	originCheck bool
-	lineCount   uint
+	scanner      *bufio.Scanner
+	tld          tld.TLD
+	ttl          uint
+	origin       string
+	originCheck  bool
+	lineCount    uint
+	domainInsert bulk.Insert
 }
 
-func New(t tld.TLD) Parser {
-	parser := Parser{
-		tld:         t,
-		ttl:         86400, //24 hours
-		origin:      t.Name + ".",
-		originCheck: false,
+func New(t tld.TLD) (Parser, error) {
+	di, err := domain.NewBulkInsert()
+	if err != nil {
+		log.Printf("ERROR: New:NewInsert: %s", err)
+		return Parser{}, err
 	}
-	return parser
+	parser := Parser{
+		tld:          t,
+		ttl:          86400, //24 hours
+		origin:       t.Name + ".",
+		originCheck:  false,
+		domainInsert: di,
+	}
+	return parser, nil
 }
 
 func (p *Parser) Parse() error {
@@ -103,5 +112,5 @@ func (p *Parser) handleLine(line string) {
 		log.Printf("WARN: handleLine:line: %s", line)
 		return
 	}
-	record.Save()
+	record.Save(p)
 }

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/jawr/dns/database/bulk"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/tld"
 	"strings"
@@ -29,6 +30,31 @@ func New(name string, t tld.TLD) (Domain, error) {
 		Name: name,
 		TLD:  t,
 	}, err
+}
+
+func NewDummy(name string, t tld.TLD) Domain {
+	name = strings.TrimSuffix(name, ".")
+	name = strings.TrimSuffix(name, "."+t.Name)
+	return Domain{
+		ID:   -1,
+		Name: name,
+		TLD:  t,
+	}
+}
+
+func NewBulkInsert() (bulk.Insert, error) {
+	table := `CREATE UNLOGGED TABLE %s (
+		name TEXT,
+		tld INT
+	)`
+	tableName := "_domain__%d"
+	bi, err := bulk.NewInsert(tableName, table, "domain_base_id_seq", "name", "tld")
+	return bi, err
+}
+
+func (d *Domain) BulkInsert(stmt bulk.Stmt) error {
+	_, err := stmt.Exec(d.Name, d.TLD.ID)
+	return err
 }
 
 func GetByNameAndTLD() string {

@@ -22,10 +22,12 @@ func New(name string) (TLD, error) {
 	}
 	var id int32
 	err = conn.QueryRow("SELECT insert_tld($1)", name).Scan(&id)
-	return TLD{
+	t := TLD{
 		ID:   id,
 		Name: name,
-	}, err
+	}
+	c.Add(t)
+	return t, err
 }
 
 func (t TLD) UID() string { return t.Name }

@@ -1,12 +1,13 @@
 package connection
 
 import (
-	"github.com/jackc/pgx"
+	"database/sql"
+	_ "github.com/lib/pq"
 	"log"
 )
 
 type connection struct {
-	db *pgx.ConnPool
+	db *sql.DB
 }
 
 type Row interface {
@@ -15,20 +16,21 @@ type Row interface {
 
 var single *connection = nil
 
-func Get() (*pgx.Conn, error) {
-	pool, err := pgx.NewConnPool(extractConfig())
-	if err != nil {
-		log.Printf("Unable to connect to database: %s", err)
-		return nil, err
+func Get() (*sql.DB, error) {
+	if single == nil {
+		single = new(connection)
+		single.setup()
 	}
-	return pool.Acquire()
+	err := single.db.Ping()
+	return single.db, err
 }
 
-func extractConfig() pgx.ConnPoolConfig {
-	var config pgx.ConnPoolConfig
-	config.Host = "localhost"
-	config.User = "dns"
-	config.Password = "dns!pass$"
-	config.Database = "dns"
-	return config
+func (c *connection) setup() error {
+	conn, err := sql.Open("postgres", "user=dns password=dns!pass$ dbname=dns")
+	if err != nil {
+		log.Printf("ERROR: connection.go:setup:sql.Open: %s", err)
+		return err
+	}
+	c.db = conn
+	return nil
 }

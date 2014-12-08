@@ -22,10 +22,12 @@ func New(name string) (RecordType, error) {
 	}
 	var id int32
 	err = conn.QueryRow("SELECT insert_record_type($1)", name).Scan(&id)
-	return RecordType{
+	rt := RecordType{
 		ID:   id,
 		Name: name,
-	}, err
+	}
+	c.Add(rt)
+	return rt, err
 }
 
 func (rt RecordType) UID() string { return rt.Name }

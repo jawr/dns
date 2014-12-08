@@ -22,7 +22,9 @@ type Record struct {
 	TLD        tld.TLD
 }
 
-func (r Record) Save() {
+// creates a temp table for domain and record in it's own transaction
+// and then merge the tables
+func (r Record) Save(parser *Parser) {
 	un(trace())
 	var rArgs []string
 	if len(r.Args) > 1 {
@@ -46,20 +48,21 @@ func (r Record) Save() {
 		return
 	}
 
-	domain, err := domain.New(r.Name, r.TLD)
+	domain := domain.NewDummy(r.Name, r.TLD)
+	err = parser.domainInsert.Add(&domain)
 	if err != nil {
 		log.Printf("ERROR: Record.Save:domain.New: %s", err)
 		return
 	}
 
-	rr := record.Record{
+	_ = record.Record{
 		Domain:     domain,
 		Args:       args,
 		RecordType: recordType,
 		Hash:       hash,
 	}
 
-	log.Printf("%+v", rr)
+	//log.Printf("%+v", rr)
 }
 
 // This function assumes the following:

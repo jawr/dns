@@ -24,7 +24,11 @@ func main() {
 		return
 	}
 
-	p := parser.New(t)
+	p, err := parser.New(t)
+	if err != nil {
+		log.Printf("Error setting up Parser: %s", err)
+		return
+	}
 	//err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/20141113-net.zone.gz")
 	err = p.SetupFile("/home/jawr/dns/zonefiles/biz.zone")
 	if err != nil {
