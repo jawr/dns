@@ -35,8 +35,8 @@ func GetByNameAndTLD() string {
 	return "SELECT * FROM domain WHERE name = $1 AND tld = $2"
 }
 
-func GetByID(id int32) (Domain, error) {
-	return Get("SELECT * FROM domain WHERE id = $1", id)
+func GetByID() string {
+	return "SELECT * FROM domain WHERE id = $1"
 }
 
 func parseRow(row connection.Row) (Domain, error) {
@@ -46,7 +46,7 @@ func parseRow(row connection.Row) (Domain, error) {
 	if err != nil {
 		return d, err
 	}
-	t, err := tld.GetByID(tldId)
+	t, err := tld.Get(tld.GetByID(), tldId)
 	d.TLD = t
 	return d, nil
 }

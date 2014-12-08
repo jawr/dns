@@ -1,6 +1,7 @@
 package tld
 
 import (
+	"github.com/jawr/dns/database/cache"
 	"github.com/jawr/dns/database/connection"
 )
 
@@ -9,7 +10,12 @@ type TLD struct {
 	Name string
 }
 
+var c = cache.New()
+
 func New(name string) (TLD, error) {
+	if t, ok := c.Check(name); ok {
+		return t.(TLD), nil
+	}
 	conn, err := connection.Get()
 	if err != nil {
 		return TLD{}, err
@@ -22,8 +28,10 @@ func New(name string) (TLD, error) {
 	}, err
 }
 
-func GetByID(id int32) (TLD, error) {
-	return Get("SELECT * FROM tld WHERE id = $1", id)
+func (t TLD) UID() string { return t.Name }
+
+func GetByID() string {
+	return "SELECT * FROM tld WHERE id = $1"
 }
 
 func parseRow(row connection.Row) (TLD, error) {

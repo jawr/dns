@@ -33,6 +33,7 @@ func (r Record) Save() {
 		Addr: r.Args[0],
 		Args: rArgs,
 	}
+
 	h := md5.New()
 	io.WriteString(h, r.Name)
 	io.WriteString(h, r.Args[0])
@@ -45,14 +46,14 @@ func (r Record) Save() {
 		return
 	}
 
-	d, err := domain.New(r.Name, r.TLD)
+	domain, err := domain.New(r.Name, r.TLD)
 	if err != nil {
 		log.Printf("ERROR: Record.Save:domain.New: %s", err)
 		return
 	}
 
 	rr := record.Record{
-		Domain:     d,
+		Domain:     domain,
 		Args:       args,
 		RecordType: recordType,
 		Hash:       hash,

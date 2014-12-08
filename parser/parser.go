@@ -17,15 +17,11 @@ type Parser struct {
 	lineCount   uint
 }
 
-func New(tldName string) Parser {
-	tld := tld.TLD{
-		ID:   1,
-		Name: tldName,
-	}
+func New(t tld.TLD) Parser {
 	parser := Parser{
-		tld:         tld,
+		tld:         t,
 		ttl:         86400, //24 hours
-		origin:      tld.Name + ".",
+		origin:      t.Name + ".",
 		originCheck: false,
 	}
 	return parser

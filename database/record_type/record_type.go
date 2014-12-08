@@ -1,6 +1,7 @@
 package record_type
 
 import (
+	"github.com/jawr/dns/database/cache"
 	"github.com/jawr/dns/database/connection"
 )
 
@@ -9,7 +10,12 @@ type RecordType struct {
 	Name string
 }
 
+var c = cache.New()
+
 func New(name string) (RecordType, error) {
+	if rt, ok := c.Check(name); ok {
+		return rt.(RecordType), nil
+	}
 	conn, err := connection.Get()
 	if err != nil {
 		return RecordType{}, err
@@ -22,8 +28,10 @@ func New(name string) (RecordType, error) {
 	}, err
 }
 
-func GetByID(id int32) (RecordType, error) {
-	return Get("SELECT * FROM record_type WHERE id = $1", id)
+func (rt RecordType) UID() string { return rt.Name }
+
+func GetByID() string {
+	return "SELECT * FROM record_type WHERE id = $1"
 }
 
 func parseRow(row connection.Row) (RecordType, error) {
