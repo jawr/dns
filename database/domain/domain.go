@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"code.google.com/p/go-uuid/uuid"
+	"fmt"
 	"github.com/jawr/dns/database/bulk"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/tld"
@@ -8,52 +10,48 @@ import (
 )
 
 type Domain struct {
-	ID   int32
+	UUID uuid.UUID
 	Name string
 	TLD  tld.TLD
 }
 
-func New(name string, t tld.TLD) (Domain, error) {
-	conn, err := connection.Get()
-	if err != nil {
-		return Domain{}, err
-	}
+func New(name string, t tld.TLD) Domain {
 	name = strings.TrimSuffix(name, ".")
 	name = strings.TrimSuffix(name, "."+t.Name)
-	var id int32
-	err = conn.QueryRow("INSERT INTO domain (name, tld) VALUES ($1, $2) RETURNING id",
-		name,
-		t.ID,
-	).Scan(&id)
+	uuid := uuid.NewSHA1(uuid.NameSpace_OID, []byte(fmt.Sprintf("%s_%d", name, t.ID)))
 	return Domain{
-		ID:   id,
+		UUID: uuid,
 		Name: name,
 		TLD:  t,
-	}, err
+	}
 }
 
-func NewDummy(name string, t tld.TLD) Domain {
-	name = strings.TrimSuffix(name, ".")
-	name = strings.TrimSuffix(name, "."+t.Name)
-	return Domain{
-		ID:   -1,
-		Name: name,
-		TLD:  t,
+func (d *Domain) Insert() error {
+	conn, err := connection.Get()
+	if err != nil {
+		return err
 	}
+	_, err = conn.Exec("INSERT INTO domain (uuid, name, tld) VALUES ($1, $2, $3)",
+		d.UUID.String(),
+		d.Name,
+		d.TLD.ID,
+	)
+	return err
 }
 
 func NewBulkInsert() (bulk.Insert, error) {
-	table := `CREATE UNLOGGED TABLE %s (
+	table := `CREATE TEMP TABLE %s (
+		uuid UUID,
 		name TEXT,
 		tld INT
-	)`
-	tableName := "_domain__%d"
-	bi, err := bulk.NewInsert(tableName, table, "domain_base_id_seq", "name", "tld")
+	) ON COMMIT DROP`
+	tableName := "_domain__%s"
+	bi, err := bulk.NewInsert(tableName, table, "uuid", "name", "tld")
 	return bi, err
 }
 
 func (d *Domain) BulkInsert(stmt bulk.Stmt) error {
-	_, err := stmt.Exec(d.Name, d.TLD.ID)
+	_, err := stmt.Exec(d.UUID.String(), d.Name, d.TLD.ID)
 	return err
 }
 
@@ -68,7 +66,7 @@ func GetByID() string {
 func parseRow(row connection.Row) (Domain, error) {
 	d := Domain{}
 	var tldId int32
-	err := row.Scan(&d.ID, &d.Name, &tldId)
+	err := row.Scan(&d.UUID, &d.Name, &tldId)
 	if err != nil {
 		return d, err
 	}

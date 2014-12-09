@@ -3,7 +3,9 @@ package bulk
 import (
 	"database/sql"
 	"fmt"
+	"github.com/dchest/uniuri"
 	"github.com/jawr/dns/database/connection"
+	"github.com/jawr/dns/util"
 	"strings"
 )
 
@@ -20,24 +22,22 @@ type Insert struct {
 	items        []Item
 	name         string
 	table        string
+	args         []string
 	sequenceName string
 	sequence     int32
 	tx           *sql.Tx
 	stmt         *sql.Stmt
 }
 
-var serial int32 = 0
-
-func NewInsert(name, table, sequenceName string, args ...string) (Insert, error) {
+func NewInsert(name, table string, args ...string) (Insert, error) {
 	conn, err := connection.Get()
 	if err != nil {
 		return Insert{}, err
 	}
 	bi := Insert{}
-	serial++
+	serial := uniuri.NewLen(5)
 	bi.name = fmt.Sprintf(name, serial)
 	bi.table = fmt.Sprintf(table, bi.name)
-	bi.sequenceName = sequenceName
 	tx, err := conn.Begin()
 	if err != nil {
 		return bi, err
@@ -48,18 +48,15 @@ func NewInsert(name, table, sequenceName string, args ...string) (Insert, error)
 	if err != nil {
 		return bi, err
 	}
-	err = bi.tx.QueryRow("SELECT nextval($1)", bi.sequenceName).Scan(&bi.sequence)
-	if err != nil {
-		return bi, err
-	}
 	// prepare args
 	for idx, i := range args {
 		args[idx] = fmt.Sprintf(`"%s"`, i)
 	}
+	bi.args = args
 	stmt := fmt.Sprintf(
-		`COPY "%s" (%s) FROM STDIN`,
+		`COPY %s (%s) FROM STDIN`,
 		bi.name,
-		strings.Join(args, ", "),
+		strings.Join(bi.args, ", "),
 	)
 	bi.stmt, err = bi.tx.Prepare(stmt)
 	if err != nil {
@@ -81,6 +78,28 @@ func (bi *Insert) Insert() error {
 	return err
 }
 
-func (bi *Insert) Close() error {
+func (bi *Insert) Merge(query string) error {
+	defer util.Un(util.Trace())
+	query = fmt.Sprintf(query, bi.name)
+	fmt.Println(query)
+	_, err := bi.tx.Exec(query)
+	return err
+}
+
+func (bi *Insert) Index(query string) error {
+	defer util.Un(util.Trace())
+	query = fmt.Sprintf(query, bi.name)
+	fmt.Println(query)
+	_, err := bi.tx.Exec(query)
+	return err
+}
+
+func (bi *Insert) Finish() error {
 	return bi.tx.Commit()
+}
+
+func (bi *Insert) Close() error {
+	// does this matter as it's called in a defer?
+	bi.stmt.Close()
+	return bi.tx.Rollback()
 }

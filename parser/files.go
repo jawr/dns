@@ -14,6 +14,9 @@ func (p *Parser) setupFile(filename string, gunzip bool) error {
 		log.Printf("ERROR: setupFile:Open: %s", err)
 		return err
 	}
+	p.setupFileDefer = func() {
+		file.Close()
+	}
 	var reader io.Reader = file
 	if gunzip {
 		reader, err = gzip.NewReader(file)

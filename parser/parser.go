@@ -2,22 +2,25 @@ package parser
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/jawr/dns/database/bulk"
 	"github.com/jawr/dns/database/domain"
 	"github.com/jawr/dns/database/tld"
+	"github.com/jawr/dns/util"
 	"log"
 	"strconv"
 	"strings"
 )
 
 type Parser struct {
-	scanner      *bufio.Scanner
-	tld          tld.TLD
-	ttl          uint
-	origin       string
-	originCheck  bool
-	lineCount    uint
-	domainInsert bulk.Insert
+	scanner        *bufio.Scanner
+	setupFileDefer func()
+	tld            tld.TLD
+	ttl            uint
+	origin         string
+	originCheck    bool
+	lineCount      uint
+	domainInsert   bulk.Insert
 }
 
 func New(t tld.TLD) (Parser, error) {
@@ -36,43 +39,77 @@ func New(t tld.TLD) (Parser, error) {
 	return parser, nil
 }
 
+func (p *Parser) Close() {
+	log.Printf("INFO: Closing %s Parser", p.tld.Name)
+	log.Printf("INFO: Closing %s Parser:setupFileDefer", p.tld.Name)
+	p.setupFileDefer()
+	log.Printf("INFO: Closing %s Parser:domainInsert", p.tld.Name)
+	p.domainInsert.Close()
+	log.Printf("INFO: Closed %s Parser", p.tld.Name)
+}
+
 func (p *Parser) Parse() error {
-	defer un(trace())
+	defer p.Close()
+	defer util.Un(util.Trace())
 	log.Printf("INFO: Parsing %s zonefile", p.tld.Name)
 	var previous string
 	p.lineCount = 0
-	for p.scanner.Scan() {
-		p.lineCount++
-		line := strings.ToLower(p.scanner.Text())
-		commentIdx := strings.Index(line, ";")
-		if commentIdx > 0 {
-			//comment := line[commentIdx:]
-			line = line[:commentIdx]
-		}
-		if len(line) == 0 {
-			continue
-		}
-		switch line[0] {
-		case ';':
-			p.handleComment(line)
-		case '@':
-			// need to wdd more ways of detecting SOA, could have a switch
-			// that only goes to handleLine when it has parsed $origin var
-			p.handleSOA(line)
-		case '$':
-			p.handleVariable(line)
-		case ' ':
-		case '	':
-			p.handleZonedLine(line, previous)
-		default:
-			if !p.originCheck {
-				p.handleSOA(line)
-			} else {
-				p.handleLine(line)
+	func() {
+		defer util.Un(util.Trace())
+		for p.scanner.Scan() {
+			p.lineCount++
+			line := strings.ToLower(p.scanner.Text())
+			commentIdx := strings.Index(line, ";")
+			if commentIdx > 0 {
+				//comment := line[commentIdx:]
+				line = line[:commentIdx]
 			}
+			if len(line) == 0 {
+				continue
+			}
+			switch line[0] {
+			case ';':
+				p.handleComment(line)
+			case '@':
+				// need to wdd more ways of detecting SOA, could have a switch
+				// that only goes to handleLine when it has parsed $origin var
+				p.handleSOA(line)
+			case '$':
+				p.handleVariable(line)
+			case ' ':
+			case '	':
+				p.handleZonedLine(line, previous)
+			default:
+				if !p.originCheck {
+					p.handleSOA(line)
+				} else {
+					p.handleLine(line)
+				}
+			}
+			previous = line
 		}
-		previous = line
+		log.Println("INFO: Parse file complete. Proceed with sql operations.")
+	}()
+	// insert our domains and commit our tx to avoid
+	p.domainInsert.Insert()
+	err := p.domainInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
+	err = p.domainInsert.Merge(
+		fmt.Sprintf(`
+			INSERT INTO domain__%d 
+			SELECT DISTINCT * FROM %%s d2
+				WHERE NOT EXISTS (
+					SELECT NULL FROM domain__%d d WHERE 
+						d.uuid = d2.uuid
+				)`,
+			p.tld.ID,
+			p.tld.ID,
+		),
+	)
+	if err != nil {
+		log.Println("ERROR: Parse:Merge: %s", err)
+		return err
 	}
+	p.domainInsert.Finish()
 	log.Println("INFO: Parse complete")
 	return nil
 }

@@ -7,15 +7,13 @@ CREATE TABLE tld (
 	UNIQUE (name)
 );
 
-DROP TABLE IF EXISTS domain_base CASCADE;
-DROP SEQUENCE IF EXISTS domain_base_id CASCADE;
-CREATE TABLE domain_base (
-	id SERIAL,
+DROP TABLE IF EXISTS domain CASCADE;
+CREATE TABLE domain (
+	uuid UUID,
 	name VARCHAR(255),
 	tld INT NOT NULL references tld(id),
-	PRIMARY KEY (id)
+	PRIMARY KEY (uuid)
 );
-CREATE OR REPLACE VIEW domain AS SELECT * FROM domain_base;
 
 DROP TABLE IF EXISTS record_type CASCADE;
 DROP SEQUENCE IF EXISTS record_type_id CASCADE;
@@ -30,7 +28,7 @@ DROP TABLE IF EXISTS record CASCADE;
 DROP SEQUENCE IF EXISTS record_id CASCADE;
 CREATE TABLE record (
 	id SERIAL,
-	domain INT NOT NULL references domain_base(id),
+	domain UUID NOT NULL references domain(uuid),
 	name VARCHAR(255),
 	args json,
 	record_type INT NOT NULL references record_type(id),
@@ -55,7 +53,7 @@ CREATE OR REPLACE FUNCTION insert_tld(VARCHAR)
 		create_sql := 'CREATE TABLE domain__' || tld_id::text || ' ( ' ||
 			'CHECK (tld = ' || tld_id || ' ), ' ||
 			'UNIQUE (name)' ||
-	       ') INHERITS (domain_base)';
+	       ') INHERITS (domain)';
 		EXECUTE create_sql;
 		RETURN tld_id;
 	EXCEPTION WHEN UNIQUE_VIOLATION THEN
@@ -71,19 +69,16 @@ CREATE OR REPLACE FUNCTION insert_domain()
 	DECLARE
 		insert_sql TEXT;
 	BEGIN
-		IF NEW.id IS NULL THEN
-			NEW.id := nextval('domain_base_id_seq');
-		END IF;
 		insert_sql := 'INSERT INTO domain__' || NEW.tld::text || 
-			' (name, tld) VALUES (' || quote_literal(NEW.name) || ',' || NEW.tld || ')';
+			' (uuid, name, tld) VALUES (' || quote_literal(NEW.uuid) || ',' || quote_literal(NEW.name) || ',' || NEW.tld || ')';
 		EXECUTE insert_sql;
-		RETURN NEW;
+		RETURN NULL;
 	EXCEPTION WHEN UNIQUE_VIOLATION THEN
-		RETURN NEW;
+		RETURN NULL;
 	END;
 	$$;
 
-CREATE TRIGGER insert_domain_in_to_partition INSTEAD OF INSERT ON domain
+CREATE TRIGGER insert_domain_in_to_partition BEFORE INSERT ON domain
 	FOR EACH ROW EXECUTE PROCEDURE insert_domain();
 
 -- Only use this to populate record_type table as it creates a
@@ -132,4 +127,3 @@ CREATE OR REPLACE FUNCTION insert_record()
 
 CREATE TRIGGER insert_record_in_to_partition BEFORE INSERT ON record
 	FOR EACH ROW EXECUTE PROCEDURE insert_record();
-

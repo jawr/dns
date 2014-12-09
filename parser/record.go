@@ -8,6 +8,7 @@ import (
 	"github.com/jawr/dns/database/record"
 	"github.com/jawr/dns/database/record_type"
 	"github.com/jawr/dns/database/tld"
+	"github.com/jawr/dns/util"
 	"io"
 	"log"
 	"strconv"
@@ -25,7 +26,6 @@ type Record struct {
 // creates a temp table for domain and record in it's own transaction
 // and then merge the tables
 func (r Record) Save(parser *Parser) {
-	un(trace())
 	var rArgs []string
 	if len(r.Args) > 1 {
 		rArgs = r.Args[1:]
@@ -48,10 +48,10 @@ func (r Record) Save(parser *Parser) {
 		return
 	}
 
-	domain := domain.NewDummy(r.Name, r.TLD)
+	domain := domain.New(r.Name, r.TLD)
 	err = parser.domainInsert.Add(&domain)
 	if err != nil {
-		log.Printf("ERROR: Record.Save:domain.New: %s", err)
+		log.Printf("ERROR: Record.Save:domainInsert.Add: %s", err)
 		return
 	}
 
@@ -77,7 +77,7 @@ func (p Parser) getRecord(fields []string) (Record, error) {
 	typeIdx := 1
 	// strip \sin\s
 	if len(fields) > 3 {
-		fields = filterIN(fields)
+		fields = util.FilterIN(fields)
 	}
 	if len(fields) > 3 {
 		ttl, err := strconv.ParseUint(fields[1], 10, 0)

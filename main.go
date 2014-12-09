@@ -29,8 +29,9 @@ func main() {
 		log.Printf("Error setting up Parser: %s", err)
 		return
 	}
-	//err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/20141113-net.zone.gz")
-	err = p.SetupFile("/home/jawr/dns/zonefiles/biz.zone")
+	err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/20141113-net.zone.gz")
+	//err = p.SetupFile("/home/jawr/dns/zonefiles/biz.zone")
+	//err = p.SetupFile("/home/jawr/dns/zonefiles/20140622-biz.zone")
 	if err != nil {
 		log.Printf("Error opening Gunzip file for parsing: %s", err)
 		return
