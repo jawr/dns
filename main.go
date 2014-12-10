@@ -24,19 +24,26 @@ func main() {
 		return
 	}
 
-	p, err := parser.New(t)
+	p := parser.New(t)
 	if err != nil {
 		log.Printf("Error setting up Parser: %s", err)
 		return
 	}
-	err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/20141113-net.zone.gz")
+	//err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/20141113-net.zone.gz")
 	//err = p.SetupFile("/home/jawr/dns/zonefiles/biz.zone")
-	//err = p.SetupFile("/home/jawr/dns/zonefiles/20140622-biz.zone")
-	if err != nil {
-		log.Printf("Error opening Gunzip file for parsing: %s", err)
-		return
+	files := []string{
+		"20140621-biz.zone.gz",
+		"20140622-biz.zone.gz",
+		"20141210-biz.zone.gz",
 	}
-	p.Parse()
+	for _, f := range files {
+		err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/" + f)
+		if err != nil {
+			log.Printf("Error opening Gunzip file for parsing: %s", err)
+			return
+		}
+		p.Parse()
+	}
 }
 
 // 2014/12/05 00:47:07 Starting parse

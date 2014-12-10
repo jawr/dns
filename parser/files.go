@@ -3,12 +3,32 @@ package parser
 import (
 	"bufio"
 	"compress/gzip"
+	"errors"
 	"io"
 	"log"
 	"os"
+	"regexp"
+	"strings"
+	"time"
 )
 
+var tldRe *regexp.Regexp = regexp.MustCompile(`^(\d{8})\-([\w\d\-]+)[\-\.]zone[\-\.](data|gz)`)
+
+var tldFilenameDate string = "20060102"
+
 func (p *Parser) setupFile(filename string, gunzip bool) error {
+	filenameArgs := strings.Split(filename, "/")
+	name := filenameArgs[len(filenameArgs)-1]
+	tldNameArgs := tldRe.FindStringSubmatch(name)
+	if len(tldNameArgs) < 4 {
+		return errors.New("No TLD or date detected in zone filename: " + name)
+	}
+	p.tldName = tldNameArgs[2]
+	var err error
+	p.Date, err = time.Parse(tldFilenameDate, tldNameArgs[1])
+	if err != nil {
+		return err
+	}
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Printf("ERROR: setupFile:Open: %s", err)

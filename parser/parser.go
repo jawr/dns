@@ -10,33 +10,30 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Parser struct {
 	scanner        *bufio.Scanner
 	setupFileDefer func()
 	tld            tld.TLD
+	tldName        string
+	Date           time.Time
 	ttl            uint
 	origin         string
 	originCheck    bool
 	lineCount      uint
-	domainInsert   bulk.Insert
+	domainInsert   *bulk.Insert
 }
 
-func New(t tld.TLD) (Parser, error) {
-	di, err := domain.NewBulkInsert()
-	if err != nil {
-		log.Printf("ERROR: New:NewInsert: %s", err)
-		return Parser{}, err
-	}
+func New(t tld.TLD) Parser {
 	parser := Parser{
-		tld:          t,
-		ttl:          86400, //24 hours
-		origin:       t.Name + ".",
-		originCheck:  false,
-		domainInsert: di,
+		tld:         t,
+		ttl:         86400, //24 hours
+		origin:      t.Name + ".",
+		originCheck: false,
 	}
-	return parser, nil
+	return parser
 }
 
 func (p *Parser) Close() {
@@ -51,6 +48,11 @@ func (p *Parser) Close() {
 func (p *Parser) Parse() error {
 	defer p.Close()
 	defer util.Un(util.Trace())
+	bi, err := domain.NewBulkInsert()
+	if err != nil {
+		return err
+	}
+	p.domainInsert = &bi
 	log.Printf("INFO: Parsing %s zonefile", p.tld.Name)
 	var previous string
 	p.lineCount = 0
@@ -92,7 +94,7 @@ func (p *Parser) Parse() error {
 	}()
 	// insert our domains and commit our tx to avoid
 	p.domainInsert.Insert()
-	err := p.domainInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
+	err = p.domainInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
 	err = p.domainInsert.Merge(
 		fmt.Sprintf(`
 			INSERT INTO domain__%d 

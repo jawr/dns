@@ -1,15 +1,12 @@
 package parser
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
 	"github.com/jawr/dns/database/domain"
 	"github.com/jawr/dns/database/record"
 	"github.com/jawr/dns/database/record_type"
 	"github.com/jawr/dns/database/tld"
 	"github.com/jawr/dns/util"
-	"io"
 	"log"
 	"strconv"
 	"strings"
@@ -36,33 +33,21 @@ func (r Record) Save(parser *Parser) {
 		Args: rArgs,
 	}
 
-	h := md5.New()
-	io.WriteString(h, r.Name)
-	io.WriteString(h, r.Args[0])
-	io.WriteString(h, r.RecordType)
-	hash := hex.EncodeToString(h.Sum(nil))
-
-	recordType, err := record_type.New(r.RecordType)
+	rt, err := record_type.New(r.RecordType)
 	if err != nil {
 		log.Printf("ERROR: Record.Save:record_type.New: %s", err)
 		return
 	}
 
-	domain := domain.New(r.Name, r.TLD)
-	err = parser.domainInsert.Add(&domain)
+	d := domain.New(r.Name, r.TLD)
+	err = parser.domainInsert.Add(&d)
 	if err != nil {
 		log.Printf("ERROR: Record.Save:domainInsert.Add: %s", err)
 		return
 	}
 
-	_ = record.Record{
-		Domain:     domain,
-		Args:       args,
-		RecordType: recordType,
-		Hash:       hash,
-	}
-
-	//log.Printf("%+v", rr)
+	rr := record.New(r.Name, parser.Date, d, args, rt)
+	log.Printf("%+v", rr)
 }
 
 // This function assumes the following:
