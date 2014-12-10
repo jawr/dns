@@ -27,15 +27,13 @@ CREATE TABLE record_type (
 DROP TABLE IF EXISTS record CASCADE;
 DROP SEQUENCE IF EXISTS record_id CASCADE;
 CREATE TABLE record (
-	id SERIAL,
+	uuid UUID,
 	domain UUID NOT NULL references domain(uuid),
 	name VARCHAR(255),
 	args json,
 	record_type INT NOT NULL references record_type(id),
-	hash VARCHAR(32),
+	parser_date DATESTAMP NOT NULL,
 	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-	active BOOLEAN DEFAULT TRUE,
-	history json,
 	PRIMARY KEY (id)
 );
 
