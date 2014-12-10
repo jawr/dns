@@ -25,7 +25,7 @@ func (p *Parser) setupFile(filename string, gunzip bool) error {
 	}
 	p.tldName = tldNameArgs[2]
 	var err error
-	p.Date, err = time.Parse(tldFilenameDate, tldNameArgs[1])
+	p.date, err = time.Parse(tldFilenameDate, tldNameArgs[1])
 	if err != nil {
 		return err
 	}

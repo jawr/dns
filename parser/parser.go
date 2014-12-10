@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jawr/dns/database/bulk"
 	"github.com/jawr/dns/database/domain"
+	"github.com/jawr/dns/database/record"
 	"github.com/jawr/dns/database/tld"
 	"github.com/jawr/dns/util"
 	"log"
@@ -18,12 +19,13 @@ type Parser struct {
 	setupFileDefer func()
 	tld            tld.TLD
 	tldName        string
-	Date           time.Time
+	date           time.Time
 	ttl            uint
 	origin         string
 	originCheck    bool
 	lineCount      uint
 	domainInsert   *bulk.Insert
+	recordInsert   *bulk.Insert
 }
 
 func New(t tld.TLD) Parser {
@@ -40,6 +42,8 @@ func (p *Parser) Close() {
 	log.Printf("INFO: Closing %s Parser", p.tld.Name)
 	log.Printf("INFO: Closing %s Parser:setupFileDefer", p.tld.Name)
 	p.setupFileDefer()
+	log.Printf("INFO: Closing %s Parser:recordInsert", p.tld.Name)
+	p.recordInsert.Close()
 	log.Printf("INFO: Closing %s Parser:domainInsert", p.tld.Name)
 	p.domainInsert.Close()
 	log.Printf("INFO: Closed %s Parser", p.tld.Name)
@@ -48,6 +52,11 @@ func (p *Parser) Close() {
 func (p *Parser) Parse() error {
 	defer p.Close()
 	defer util.Un(util.Trace())
+	ri, err := record.NewBulkInsert()
+	if err != nil {
+		return err
+	}
+	p.recordInsert = &ri
 	bi, err := domain.NewBulkInsert()
 	if err != nil {
 		return err
@@ -94,7 +103,9 @@ func (p *Parser) Parse() error {
 	}()
 	// insert our domains and commit our tx to avoid
 	p.domainInsert.Insert()
+	p.recordInsert.Insert()
 	err = p.domainInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
+	err = p.recordInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
 	err = p.domainInsert.Merge(
 		fmt.Sprintf(`
 			INSERT INTO domain__%d 
@@ -108,10 +119,23 @@ func (p *Parser) Parse() error {
 		),
 	)
 	if err != nil {
+		log.Println("ERROR: Parse:domain Merge: %s", err)
+		return err
+	}
+	err = p.recordInsert.Merge(`
+			INSERT INTO record
+			SELECT DISTINCT * FROM %%s r2
+				WHERE NOT EXISTS (
+					SELECT NULL FROM record r WHERE 
+						r.uuid = r2.uuid
+				)`,
+	)
+	if err != nil {
 		log.Println("ERROR: Parse:Merge: %s", err)
 		return err
 	}
 	p.domainInsert.Finish()
+	p.recordInsert.Finish()
 	log.Println("INFO: Parse complete")
 	return nil
 }
@@ -145,11 +169,15 @@ func (p *Parser) handleVariable(line string) {
 
 func (p *Parser) handleLine(line string) {
 	fields := strings.Fields(line)
-	record, err := p.getRecord(fields)
+	rr, err := p.getRecord(fields)
 	if err != nil {
 		log.Printf("WARN: handleLine:getRecord: %s", err)
 		log.Printf("WARN: handleLine:line: %s", line)
 		return
 	}
-	record.Save(p)
+	err = p.recordInsert.Add(&rr)
+	if err != nil {
+		log.Printf("ERROR: handleLine:recordInsert.Add: %s", err)
+		return
+	}
 }

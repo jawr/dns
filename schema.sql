@@ -32,9 +32,9 @@ CREATE TABLE record (
 	name VARCHAR(255),
 	args json,
 	record_type INT NOT NULL references record_type(id),
-	parser_date DATESTAMP NOT NULL,
+	parser_date DATE NOT NULL,
 	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-	PRIMARY KEY (id)
+	PRIMARY KEY (uuid)
 );
 
 -- Only use this to populate tld table as it creates a
@@ -92,7 +92,7 @@ CREATE OR REPLACE FUNCTION insert_record_type(VARCHAR)
 		INSERT INTO record_type (name) VALUES ($1) RETURNING id INTO rt_id;
 		create_sql := 'CREATE TABLE record__' || rt_id::text || ' ( ' ||
 			'CHECK (record_type = ' || rt_id || ' ), ' ||
-			'UNIQUE (hash)' ||
+			'PRIMARY KEY (uuid)' ||
 	       ') INHERITS (record)';
 		EXECUTE create_sql;
 		RETURN rt_id;
@@ -110,12 +110,13 @@ CREATE OR REPLACE FUNCTION insert_record()
 		insert_sql TEXT;
 	BEGIN
 		insert_sql := 'INSERT INTO record__' || NEW.record_type::text || 
-			' (domain, name, args, record_type, hash) VALUES (' || 
-				NEW.domin || ',' ||
+			' (uuid, domain, name, args, record_type, parser_date) VALUES (' || 
+				quote_literal(NEW.uuid) || ',' ||
+				quote_literal(NEW.domain) || ',' ||
 				quote_literal(NEW.name) || ',' ||
 				quote_literal(NEW.args) || ',' ||
 				NEW.record_type || ',' ||
-				quote_literal(NEW.hash) || ')';
+				quote_literal(NEW.parser_date) || ')';
 		EXECUTE insert_sql;
 		RETURN NULL;
 	EXCEPTION WHEN UNIQUE_VIOLATION THEN
