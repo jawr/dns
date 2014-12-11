@@ -26,13 +26,12 @@ type Parser struct {
 	lineCount      uint
 	domainInsert   *bulk.Insert
 	recordInsert   *bulk.Insert
+	recordTypes    map[string]int32
 }
 
-func New(t tld.TLD) Parser {
+func New() Parser {
 	parser := Parser{
-		tld:         t,
 		ttl:         86400, //24 hours
-		origin:      t.Name + ".",
 		originCheck: false,
 	}
 	return parser
@@ -61,6 +60,7 @@ func (p *Parser) Parse() error {
 	if err != nil {
 		return err
 	}
+	p.recordTypes = make(map[string]int32)
 	p.domainInsert = &bi
 	log.Printf("INFO: Parsing %s zonefile", p.tld.Name)
 	var previous string
@@ -108,31 +108,43 @@ func (p *Parser) Parse() error {
 	err = p.recordInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
 	err = p.domainInsert.Merge(
 		fmt.Sprintf(`
-			INSERT INTO domain__%d 
+			INSERT INTO domain__%d
 			SELECT DISTINCT * FROM %%s d2
 				WHERE NOT EXISTS (
-					SELECT NULL FROM domain__%d d WHERE 
+					SELECT NULL FROM domain__%d d WHERE
 						d.uuid = d2.uuid
 				)`,
 			p.tld.ID,
 			p.tld.ID,
 		),
 	)
+	//err = p.domainInsert.Merge("INSERT INTO domain SELECT * FROM %s")
 	if err != nil {
 		log.Println("ERROR: Parse:domain Merge: %s", err)
 		return err
 	}
-	err = p.recordInsert.Merge(`
-			INSERT INTO record
-			SELECT DISTINCT * FROM %%s r2
-				WHERE NOT EXISTS (
-					SELECT NULL FROM record r WHERE 
-						r.uuid = r2.uuid
-				)`,
-	)
-	if err != nil {
-		log.Println("ERROR: Parse:Merge: %s", err)
-		return err
+	//err = p.recordInsert.Merge("INSERT INTO record SELECT * FROM %s")
+	// this one might still be slow due to us not inserting straight in to the
+	// correct record type table (bypass the trigger)
+	for _, rtID := range p.recordTypes {
+		err = p.recordInsert.Merge(
+			fmt.Sprintf(`
+				INSERT INTO record__%d
+				SELECT DISTINCT ON (uuid) * FROM %%s r2
+					WHERE NOT EXISTS (
+						SELECT NULL FROM record__%d r WHERE
+							r.uuid = r2.uuid AND r.record_type = %d
+					) AND r2.record_type = %d`,
+				rtID,
+				rtID,
+				rtID,
+				rtID,
+			),
+		)
+		if err != nil {
+			log.Println("ERROR: Parse:Merge: %s", err)
+			return err
+		}
 	}
 	p.domainInsert.Finish()
 	p.recordInsert.Finish()
@@ -180,4 +192,5 @@ func (p *Parser) handleLine(line string) {
 		log.Printf("ERROR: handleLine:recordInsert.Add: %s", err)
 		return
 	}
+	p.recordTypes[rr.RecordType.Name] = rr.RecordType.ID
 }

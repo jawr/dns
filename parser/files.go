@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"compress/gzip"
 	"errors"
+	"github.com/jawr/dns/database/tld"
 	"io"
 	"log"
 	"os"
@@ -24,7 +25,14 @@ func (p *Parser) setupFile(filename string, gunzip bool) error {
 		return errors.New("No TLD or date detected in zone filename: " + name)
 	}
 	p.tldName = tldNameArgs[2]
+	p.origin = p.tldName + "."
+
 	var err error
+	p.tld, err = tld.New(p.tldName)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 	p.date, err = time.Parse(tldFilenameDate, tldNameArgs[1])
 	if err != nil {
 		return err

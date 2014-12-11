@@ -23,14 +23,20 @@ type Record struct {
 // refactor this "package"
 
 func (p Parser) buildRecordRow(r Record) (record.Record, error) {
-	var rArgs []string
-	if len(r.Args) > 1 {
-		rArgs = r.Args[1:]
-	}
+	/*
+		var rArgs []string
+		if len(r.Args) > 1 {
+			rArgs = r.Args[1:]
+		}
+		args := record.RecordArgs{
+			TTL:  r.TTL,
+			Addr: r.Args[0],
+			Args: rArgs,
+		}
+	*/
 	args := record.RecordArgs{
 		TTL:  r.TTL,
-		Addr: r.Args[0],
-		Args: rArgs,
+		Args: r.Args,
 	}
 
 	rt, err := record_type.New(r.RecordType)

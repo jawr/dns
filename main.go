@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/jawr/dns/database/tld"
 	"github.com/jawr/dns/parser"
 	"io"
 	"log"
@@ -18,13 +17,7 @@ func main() {
 	defer f.Close()
 	log.SetOutput(io.MultiWriter(f, os.Stdout))
 
-	t, err := tld.New("biz")
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	p := parser.New(t)
+	p := parser.New()
 	if err != nil {
 		log.Printf("Error setting up Parser: %s", err)
 		return
@@ -32,6 +25,7 @@ func main() {
 	//err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/20141113-net.zone.gz")
 	//err = p.SetupFile("/home/jawr/dns/zonefiles/biz.zone")
 	files := []string{
+		"20141113-net.zone.gz",
 		"20140621-biz.zone.gz",
 		"20140622-biz.zone.gz",
 		"20141210-biz.zone.gz",

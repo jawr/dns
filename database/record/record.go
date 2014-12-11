@@ -12,7 +12,6 @@ import (
 
 type RecordArgs struct {
 	TTL  uint     `json:"ttl"`
-	Addr string   `json:"addr"`
 	Args []string `json:"args,omitempty,omitempty"`
 }
 
