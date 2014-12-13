@@ -26,6 +26,10 @@ func New(name string, t tld.TLD) Domain {
 	}
 }
 
+func (d Domain) String() string {
+	return d.Name + "." + d.TLD.Name
+}
+
 func (d *Domain) Insert() error {
 	conn, err := connection.Get()
 	if err != nil {

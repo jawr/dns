@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/dchest/uniuri"
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/util"
 	"strings"
 )
 
@@ -79,14 +78,12 @@ func (bi *Insert) Insert() error {
 }
 
 func (bi *Insert) Merge(query string) error {
-	defer util.Un(util.Trace())
 	query = fmt.Sprintf(query, bi.name)
 	_, err := bi.tx.Exec(query)
 	return err
 }
 
 func (bi *Insert) Index(query string) error {
-	defer util.Un(util.Trace())
 	query = fmt.Sprintf(query, bi.name)
 	_, err := bi.tx.Exec(query)
 	return err

@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/log"
 	"io"
 	"os"
 	"regexp"

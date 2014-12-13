@@ -6,6 +6,7 @@ import (
 	"github.com/jawr/dns/database/models/record"
 	"github.com/jawr/dns/database/models/record_type"
 	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/util"
 	"strconv"
 	"strings"

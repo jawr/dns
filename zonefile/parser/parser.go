@@ -3,18 +3,16 @@ package parser
 import (
 	"bufio"
 	"fmt"
-	"github.com/ivpusic/golog"
 	"github.com/jawr/dns/database/bulk"
 	"github.com/jawr/dns/database/models/domain"
 	"github.com/jawr/dns/database/models/record"
 	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/util"
 	"strconv"
 	"strings"
 	"time"
 )
-
-var log *golog.Logger
 
 type Parser struct {
 	scanner        *bufio.Scanner
@@ -33,9 +31,6 @@ type Parser struct {
 }
 
 func New() Parser {
-	if log == nil {
-		log := golog.GetLogger("github.com/jawr/dns/zonefile/parser")
-	}
 	parser := Parser{
 		ttl:         86400, //24 hours
 		originCheck: false,
@@ -76,7 +71,7 @@ func (p *Parser) Parse() error {
 	var previous string
 	p.lineCount = 0
 	func() {
-		defer util.Un(util.Trace(), log)
+		defer util.Un(util.Trace())
 		for p.scanner.Scan() {
 			p.lineCount++
 			p.line = strings.ToLower(p.scanner.Text())

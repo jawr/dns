@@ -37,6 +37,16 @@ CREATE TABLE record (
 	PRIMARY KEY (uuid)
 );
 
+DROP TABLE IF EXISTS whois CASCADE;
+DROP SEQUENCE IF EXISTS whois_id CASCADE;
+CREATE TABLE whois (
+	id SERIAL,
+	domain UUID,
+	data json,
+	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (id)
+);
+
 -- Only use this to populate tld table as it creates a
 -- partitions the domain table
 CREATE OR REPLACE FUNCTION insert_tld(VARCHAR)

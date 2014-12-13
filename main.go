@@ -1,44 +1,47 @@
 package main
 
 import (
-	"github.com/jawr/dns/zonefile/parser"
-	"io"
-	"log"
-	"os"
+	"github.com/jawr/dns/database/models/domain"
+	"github.com/jawr/dns/log"
+	"github.com/jawr/dns/rest"
+	whois "github.com/jawr/dns/whois/parser"
+	zonefile "github.com/jawr/dns/zonefile/parser"
+	"net/http"
 )
 
 func main() {
-	// ofload to another function, but how to deal with defer close??
-	f, err := os.OpenFile("output.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("ERROR: SetupLog:OpenFile: %s", err)
-		return
-	}
-	defer f.Close()
-	log.SetOutput(io.MultiWriter(f, os.Stdout))
+	h := rest.Setup()
+	http.ListenAndServe(":8080", h)
+}
 
-	p := parser.New()
+func parseWhois() {
+	d, err := domain.Get(domain.GetByUUID(), "df16d75f-7d86-51dd-9951-4b19e723a6d2")
 	if err != nil {
-		log.Printf("Error setting up Parser: %s", err)
+		log.Error("Unable to get domain: %s", err)
 		return
 	}
-	//err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/20141113-net.zone.gz")
-	//err = p.SetupFile("/home/jawr/dns/zonefiles/biz.zone")
+
+	p := whois.New()
+	err = p.Parse(d)
+	if err != nil {
+		log.Error("Unable to parse domain: %s", err)
+	}
+}
+
+func parseZonefiles() {
+	p := zonefile.New()
 	files := []string{
 		//"20141113-net.zone.gz",
-		//"20140621-biz.zone.gz",
+		"20140621-biz.zone.gz",
 		"20140622-biz.zone.gz",
 		"20141210-biz.zone.gz",
 	}
 	for _, f := range files {
-		err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/" + f)
+		err := p.SetupGunzipFile("/home/jawr/dns/zonefiles/" + f)
 		if err != nil {
-			log.Printf("Error opening Gunzip file for parsing: %s", err)
+			log.Error("Unable to setup %s: %s", f, err)
 			return
 		}
 		p.Parse()
 	}
 }
-
-// 2014/12/05 00:47:07 Starting parse
-// 2014/12/05 01:03:31 {kitpvp.deadlystars.net. [104.218.96.198] 172800 a}
