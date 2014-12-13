@@ -2,8 +2,11 @@ package domain
 
 import (
 	"code.google.com/p/go-uuid/uuid"
+	"fmt"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/tld"
+	"net/url"
+	"strings"
 )
 
 const (
@@ -19,7 +22,35 @@ func GetByUUID() string {
 }
 
 func GetAll() string {
-	return SELECT + "LIMIT 10"
+	return SELECT
+}
+
+func Search(params url.Values, idx, limit int) ([]Domain, error) {
+	query := GetAll()
+	var where []string
+	var args []interface{}
+	i := 1
+	for k, _ := range params {
+		switch k {
+		case "name":
+			where = append(where, fmt.Sprintf("name = $%d", i))
+			args = append(args, params.Get(k))
+			i++
+		case "uuid":
+			where = append(where, fmt.Sprintf("uuid = $%d", i))
+			args = append(args, params.Get(k))
+			i++
+		case "tld":
+			where = append(where, fmt.Sprintf("tld = $%d", i))
+			args = append(args, params.Get(k))
+			i++
+		}
+	}
+	if len(where) > 0 {
+		query += "WHERE " + strings.Join(where, ", ") + " "
+	}
+	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, idx)
+	return GetList(query, args...)
 }
 
 func parseRow(row connection.Row) (Domain, error) {
@@ -50,7 +81,7 @@ func GetList(query string, args ...interface{}) ([]Domain, error) {
 	if err != nil {
 		return []Domain{}, err
 	}
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(query, args...)
 	defer rows.Close()
 	if err != nil {
 		return []Domain{}, err
