@@ -7,8 +7,8 @@ import (
 )
 
 type RecordType struct {
-	ID   int32
-	Name string
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
 }
 
 var c = cache.New()

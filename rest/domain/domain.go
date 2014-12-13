@@ -3,7 +3,7 @@ package domain
 import (
 	"github.com/gorilla/mux"
 	db "github.com/jawr/dns/database/models/domain"
-	"github.com/jawr/dns/log"
+	//"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest/paginator"
 	"github.com/jawr/dns/rest/util"
 	"net/http"
@@ -25,6 +25,5 @@ func (d Domain) Hello(w http.ResponseWriter, r *http.Request) {
 
 func (d Domain) List(w http.ResponseWriter, r *http.Request, query map[string][]string, idx, limit int) {
 	list, err := db.Search(query, idx, limit)
-	log.Info("%v+", list)
 	util.ToJSON(list, err, w)
 }

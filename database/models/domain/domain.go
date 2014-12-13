@@ -9,9 +9,9 @@ import (
 )
 
 type Domain struct {
-	UUID uuid.UUID
-	Name string
-	TLD  tld.TLD
+	UUID uuid.UUID `json:"uuid"`
+	Name string    `json:"name"`
+	TLD  tld.TLD   `json:"tld"`
 }
 
 func New(name string, t tld.TLD) Domain {

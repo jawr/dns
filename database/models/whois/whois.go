@@ -7,10 +7,10 @@ import (
 )
 
 type Whois struct {
-	ID     int32
-	Domain domain.Domain
-	Data   []byte
-	Added  time.Time
+	ID     int32         `json:"id"`
+	Domain domain.Domain `json:"domain"`
+	Data   []byte        `json:"data"`
+	Added  time.Time     `json:"added"`
 }
 
 func New(d domain.Domain, data []byte) Whois {
