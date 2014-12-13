@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/database/domain"
-	"github.com/jawr/dns/database/record_type"
+	"github.com/jawr/dns/database/models/domain"
+	"github.com/jawr/dns/database/models/record_type"
 	"time"
 )
 

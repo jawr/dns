@@ -3,7 +3,7 @@ package record_type
 import (
 	"github.com/jawr/dns/database/cache"
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/database/tld"
+	"github.com/jawr/dns/database/models/tld"
 )
 
 type RecordType struct {

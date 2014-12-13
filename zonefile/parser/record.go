@@ -2,10 +2,10 @@ package parser
 
 import (
 	"errors"
-	"github.com/jawr/dns/database/domain"
-	"github.com/jawr/dns/database/record"
-	"github.com/jawr/dns/database/record_type"
-	"github.com/jawr/dns/database/tld"
+	"github.com/jawr/dns/database/models/domain"
+	"github.com/jawr/dns/database/models/record"
+	"github.com/jawr/dns/database/models/record_type"
+	"github.com/jawr/dns/database/models/tld"
 	"github.com/jawr/dns/util"
 	"log"
 	"strconv"

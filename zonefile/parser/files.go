@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"compress/gzip"
 	"errors"
-	"github.com/jawr/dns/database/tld"
+	"github.com/jawr/dns/database/models/tld"
 	"io"
 	"log"
 	"os"

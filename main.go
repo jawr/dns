@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/jawr/dns/parser"
+	"github.com/jawr/dns/zonefile/parser"
 	"io"
 	"log"
 	"os"

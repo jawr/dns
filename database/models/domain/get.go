@@ -2,7 +2,7 @@ package domain
 
 import (
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/database/tld"
+	"github.com/jawr/dns/database/models/tld"
 )
 
 func GetByNameAndTLD() string {

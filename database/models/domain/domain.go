@@ -4,7 +4,7 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"fmt"
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/database/tld"
+	"github.com/jawr/dns/database/models/tld"
 	"strings"
 )
 
