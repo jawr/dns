@@ -7,7 +7,6 @@ import (
 	"github.com/jawr/dns/database/models/record_type"
 	"github.com/jawr/dns/database/models/tld"
 	"github.com/jawr/dns/util"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -30,14 +29,14 @@ func (p Parser) buildRecordRow(r Record) (record.Record, error) {
 
 	rt, err := record_type.New(r.RecordType, p.tld)
 	if err != nil {
-		log.Printf("ERROR: Record.Save:record_type.New: %s", err)
+		log.Error("Unable to create RecordType: %s", err)
 		return record.Record{}, err
 	}
 
 	d := domain.New(r.Name, r.TLD)
 	err = p.domainInsert.Add(&d)
 	if err != nil {
-		log.Printf("ERROR: Record.Save:domainInsert.Add: %s", err)
+		log.Error("Unable to bulk insert Domain: %s", err)
 		return record.Record{}, err
 	}
 
@@ -71,17 +70,15 @@ func (p Parser) getRecord(fields []string) (record.Record, error) {
 			r.TTL = uint(ttl)
 		} else {
 			// detect and fix these, maybe go to their own channel/table
-			log.Printf("WARN: getRecord:parseTTL: len(fields) == %d, fields: %s", len(fields), fields)
+			log.Warn("Unable to parse RR: len(fields) == %d, fields: %s", len(fields), fields)
 		}
 	}
 	if len(fields) <= typeIdx {
-		log.Printf("ERROR: getRecord:setTypeIdx: len(fields) == %d, fields: %s", len(fields), fields)
 		return record.Record{}, errors.New("Unable to set typeIdx in getRecord.")
 	}
 	var err error
 	r.RecordType, err = detectRecordType(fields[typeIdx])
 	if err != nil {
-		log.Printf("ERROR: getRecord.parseType: len(fields) == %d, fields: %s", len(fields), fields)
 		return record.Record{}, errors.New("Unable to detect Record Type.")
 	}
 	r.Args = fields[typeIdx+1:]

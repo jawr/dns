@@ -3,7 +3,6 @@ package connection
 import (
 	"database/sql"
 	_ "github.com/lib/pq"
-	"log"
 )
 
 type connection struct {
@@ -28,7 +27,6 @@ func Get() (*sql.DB, error) {
 func (c *connection) setup() error {
 	conn, err := sql.Open("postgres", "user=dns password=dns!pass$ dbname=dns host=/var/run/postgresql/ sslmode=disable")
 	if err != nil {
-		log.Printf("ERROR: connection.go:setup:sql.Open: %s", err)
 		return err
 	}
 	c.db = conn

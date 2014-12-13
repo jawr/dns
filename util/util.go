@@ -1,7 +1,7 @@
 package util
 
 import (
-	"log"
+	"github.com/ivpusic/golog"
 	"time"
 )
 
@@ -9,9 +9,9 @@ func Trace() time.Time {
 	return time.Now()
 }
 
-func Un(t time.Time) {
+func Un(t time.Time, log *golog.Logger) {
 	elapsed := time.Since(t)
-	log.Printf("%s", elapsed.String())
+	log.Debug("%s", elapsed.String())
 }
 
 func FilterIN(sl []string) []string {

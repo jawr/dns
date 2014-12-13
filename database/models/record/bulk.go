@@ -3,7 +3,6 @@ package record
 import (
 	"encoding/json"
 	"github.com/jawr/dns/database/bulk"
-	"log"
 )
 
 func NewBulkInsert() (bulk.Insert, error) {
@@ -26,8 +25,5 @@ func (r *Record) BulkInsert(stmt bulk.Stmt) error {
 		return err
 	}
 	_, err = stmt.Exec(r.UUID.String(), r.Domain.UUID.String(), r.Name, string(args), r.RecordType.ID, r.Date)
-	if err != nil {
-		log.Println(string(args))
-	}
 	return err
 }

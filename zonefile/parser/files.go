@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/jawr/dns/database/models/tld"
 	"io"
-	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -30,16 +29,17 @@ func (p *Parser) setupFile(filename string, gunzip bool) error {
 	var err error
 	p.tld, err = tld.New(p.tldName)
 	if err != nil {
-		log.Println(err)
+		log.Error("Unable to get TLD: %s", err)
 		return err
 	}
 	p.date, err = time.Parse(tldFilenameDate, tldNameArgs[1])
 	if err != nil {
+		log.Error("Unable to parse Zonefile date: %s", err)
 		return err
 	}
 	file, err := os.Open(filename)
 	if err != nil {
-		log.Printf("ERROR: setupFile:Open: %s", err)
+		log.Error("Unable to open Zonefile: %s", err)
 		return err
 	}
 	p.setupFileDefer = func() {
@@ -49,7 +49,7 @@ func (p *Parser) setupFile(filename string, gunzip bool) error {
 	if gunzip {
 		reader, err = gzip.NewReader(file)
 		if err != nil {
-			log.Printf("ERROR: setupFile:NewReader: %s", err)
+			log.Error("Unable to setup Zonefile gzip reader: %s", err)
 			return err
 		}
 	}

@@ -6,7 +6,6 @@ import (
 	"github.com/dchest/uniuri"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/util"
-	"log"
 	"strings"
 )
 
@@ -82,7 +81,6 @@ func (bi *Insert) Insert() error {
 func (bi *Insert) Merge(query string) error {
 	defer util.Un(util.Trace())
 	query = fmt.Sprintf(query, bi.name)
-	log.Printf("INFO: Merge Query: %s", query)
 	_, err := bi.tx.Exec(query)
 	return err
 }
@@ -90,7 +88,6 @@ func (bi *Insert) Merge(query string) error {
 func (bi *Insert) Index(query string) error {
 	defer util.Un(util.Trace())
 	query = fmt.Sprintf(query, bi.name)
-	log.Printf("INFO: Index Query: %s", query)
 	_, err := bi.tx.Exec(query)
 	return err
 }

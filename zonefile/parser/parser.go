@@ -3,16 +3,18 @@ package parser
 import (
 	"bufio"
 	"fmt"
+	"github.com/ivpusic/golog"
 	"github.com/jawr/dns/database/bulk"
 	"github.com/jawr/dns/database/models/domain"
 	"github.com/jawr/dns/database/models/record"
 	"github.com/jawr/dns/database/models/tld"
 	"github.com/jawr/dns/util"
-	"log"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var log *golog.Logger
 
 type Parser struct {
 	scanner        *bufio.Scanner
@@ -31,6 +33,9 @@ type Parser struct {
 }
 
 func New() Parser {
+	if log == nil {
+		log := golog.GetLogger("github.com/jawr/dns/zonefile/parser")
+	}
 	parser := Parser{
 		ttl:         86400, //24 hours
 		originCheck: false,
@@ -38,15 +43,19 @@ func New() Parser {
 	return parser
 }
 
+func (p Parser) String() string {
+	return fmt.Sprintf("%s (%s)", p.tld.Name, p.date)
+}
+
 func (p *Parser) Close() {
-	log.Printf("INFO: Closing %s Parser", p.tld.Name)
-	log.Printf("INFO: Closing %s Parser:setupFileDefer", p.tld.Name)
+	log.Debug("Closing %s Parser", p.String())
+	log.Debug("Closing %s Parser:setupFileDefer", p.String())
 	p.setupFileDefer()
-	log.Printf("INFO: Closing %s Parser:recordInsert", p.tld.Name)
+	log.Debug("Closing %s Parser:recordInsert", p.String())
 	p.recordInsert.Close()
-	log.Printf("INFO: Closing %s Parser:domainInsert", p.tld.Name)
+	log.Debug("Closing %s Parser:domainInsert", p.String())
 	p.domainInsert.Close()
-	log.Printf("INFO: Closed %s Parser", p.tld.Name)
+	log.Debug("Closed %s Parser", p.String())
 }
 
 func (p *Parser) Parse() error {
@@ -63,11 +72,11 @@ func (p *Parser) Parse() error {
 	}
 	p.recordTypes = make(map[string]int32)
 	p.domainInsert = &bi
-	log.Printf("INFO: Parsing %s zonefile", p.tld.Name)
+	log.Info("Parsing Zonefile: %s", p.String())
 	var previous string
 	p.lineCount = 0
 	func() {
-		defer util.Un(util.Trace())
+		defer util.Un(util.Trace(), log)
 		for p.scanner.Scan() {
 			p.lineCount++
 			p.line = strings.ToLower(p.scanner.Text())
@@ -101,11 +110,13 @@ func (p *Parser) Parse() error {
 			}
 			previous = line
 		}
-		log.Println("INFO: Parse file complete. Proceed with sql operations.")
+		log.Info("Parse %s complete. Proceed with sql operations.", p.String())
 	}()
 	// insert our domains and commit our tx to avoid
 	p.domainInsert.Insert()
 	p.recordInsert.Insert()
+	// TODO: drop index to record__%d_%d
+	// create index's
 	err = p.domainInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
 	err = p.recordInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
 	err = p.domainInsert.Merge(
@@ -120,14 +131,9 @@ func (p *Parser) Parse() error {
 			p.tld.ID,
 		),
 	)
-	//err = p.domainInsert.Merge("INSERT INTO domain SELECT * FROM %s")
 	if err != nil {
-		log.Println("ERROR: Parse:domain Merge: %s", err)
 		return err
 	}
-	//err = p.recordInsert.Merge("INSERT INTO record SELECT * FROM %s")
-	// this one might still be slow due to us not inserting straight in to the
-	// correct record type table (bypass the trigger)
 	for _, rtID := range p.recordTypes {
 		err = p.recordInsert.Merge(
 			fmt.Sprintf(`
@@ -146,13 +152,13 @@ func (p *Parser) Parse() error {
 			),
 		)
 		if err != nil {
-			log.Println("ERROR: Parse:Merge: %s", err)
 			return err
 		}
 	}
 	p.domainInsert.Finish()
+	// TODO: add index to record__%d_%d
 	p.recordInsert.Finish()
-	log.Println("INFO: Parse complete")
+	log.Info("Parse %s complete", p.String())
 	return nil
 }
 
@@ -175,7 +181,7 @@ func (p *Parser) handleVariable(line string) {
 		case "$ttl":
 			ttl, err := strconv.ParseUint(fields[1], 10, 0)
 			if err != nil {
-				log.Printf("WARN: handleVariable:$ttl: %s", err)
+				log.Warn("handleVariable:$ttl: %s", err)
 				return
 			}
 			p.ttl = uint(ttl)
@@ -187,13 +193,13 @@ func (p *Parser) handleLine(line string) {
 	fields := strings.Fields(line)
 	rr, err := p.getRecord(fields)
 	if err != nil {
-		log.Printf("WARN: handleLine:getRecord: %s", err)
-		log.Printf("WARN: handleLine:line: %s", line)
+		log.Warn("handleLine:getRecord: %s", err)
+		log.Warn("handleLine:line: %s", line)
 		return
 	}
 	err = p.recordInsert.Add(&rr)
 	if err != nil {
-		log.Printf("ERROR: handleLine:recordInsert.Add: %s", err)
+		log.Error("handleLine:recordInsert.Add: %s", err)
 		return
 	}
 	p.recordTypes[rr.RecordType.Name] = rr.RecordType.ID
