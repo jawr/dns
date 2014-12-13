@@ -34,7 +34,7 @@ func GetList(query string, args ...interface{}) ([]Whois, error) {
 	if err != nil {
 		return []Whois{}, err
 	}
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(query, args...)
 	defer rows.Close()
 	if err != nil {
 		return []Whois{}, err

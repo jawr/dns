@@ -57,7 +57,7 @@ func GetList(query string, args ...interface{}) ([]RecordType, error) {
 	if err != nil {
 		return []RecordType{}, err
 	}
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(query, args...)
 	defer rows.Close()
 	if err != nil {
 		return []RecordType{}, err

@@ -57,7 +57,7 @@ func GetList(query string, args ...interface{}) ([]TLD, error) {
 	if err != nil {
 		return []TLD{}, err
 	}
-	rows, err := conn.Query(query)
+	rows, err := conn.Query(query, args...)
 	defer rows.Close()
 	if err != nil {
 		return []TLD{}, err
