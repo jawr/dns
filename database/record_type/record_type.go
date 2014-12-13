@@ -3,6 +3,7 @@ package record_type
 import (
 	"github.com/jawr/dns/database/cache"
 	"github.com/jawr/dns/database/connection"
+	"github.com/jawr/dns/database/tld"
 )
 
 type RecordType struct {
@@ -12,7 +13,7 @@ type RecordType struct {
 
 var c = cache.New()
 
-func New(name string) (RecordType, error) {
+func New(name string, t tld.TLD) (RecordType, error) {
 	if rt, ok := c.Check(name); ok {
 		return rt.(RecordType), nil
 	}
@@ -21,7 +22,7 @@ func New(name string) (RecordType, error) {
 		return RecordType{}, err
 	}
 	var id int32
-	err = conn.QueryRow("SELECT insert_record_type($1)", name).Scan(&id)
+	err = conn.QueryRow("SELECT ensure_record_table($1, $2)", name, t.ID).Scan(&id)
 	rt := RecordType{
 		ID:   id,
 		Name: name,

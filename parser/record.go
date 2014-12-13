@@ -23,23 +23,12 @@ type Record struct {
 // refactor this "package"
 
 func (p Parser) buildRecordRow(r Record) (record.Record, error) {
-	/*
-		var rArgs []string
-		if len(r.Args) > 1 {
-			rArgs = r.Args[1:]
-		}
-		args := record.RecordArgs{
-			TTL:  r.TTL,
-			Addr: r.Args[0],
-			Args: rArgs,
-		}
-	*/
 	args := record.RecordArgs{
 		TTL:  r.TTL,
 		Args: r.Args,
 	}
 
-	rt, err := record_type.New(r.RecordType)
+	rt, err := record_type.New(r.RecordType, p.tld)
 	if err != nil {
 		log.Printf("ERROR: Record.Save:record_type.New: %s", err)
 		return record.Record{}, err
@@ -53,6 +42,10 @@ func (p Parser) buildRecordRow(r Record) (record.Record, error) {
 	}
 
 	rr := record.New(r.Name, p.date, d, args, rt)
+
+	if rr.Name == domain.CleanDomain(r.Name, d.TLD) {
+		rr.Name = "@"
+	}
 	return rr, nil
 }
 

@@ -23,6 +23,7 @@ type Parser struct {
 	ttl            uint
 	origin         string
 	originCheck    bool
+	line           string
 	lineCount      uint
 	domainInsert   *bulk.Insert
 	recordInsert   *bulk.Insert
@@ -69,7 +70,8 @@ func (p *Parser) Parse() error {
 		defer util.Un(util.Trace())
 		for p.scanner.Scan() {
 			p.lineCount++
-			line := strings.ToLower(p.scanner.Text())
+			p.line = strings.ToLower(p.scanner.Text())
+			line := p.line
 			commentIdx := strings.Index(line, ";")
 			if commentIdx > 0 {
 				//comment := line[commentIdx:]
@@ -129,14 +131,16 @@ func (p *Parser) Parse() error {
 	for _, rtID := range p.recordTypes {
 		err = p.recordInsert.Merge(
 			fmt.Sprintf(`
-				INSERT INTO record__%d
+				INSERT INTO record__%d_%d
 				SELECT DISTINCT ON (uuid) * FROM %%s r2
 					WHERE NOT EXISTS (
-						SELECT NULL FROM record__%d r WHERE
+						SELECT NULL FROM record__%d_%d r WHERE
 							r.uuid = r2.uuid AND r.record_type = %d
 					) AND r2.record_type = %d`,
 				rtID,
+				p.tld.ID,
 				rtID,
+				p.tld.ID,
 				rtID,
 				rtID,
 			),

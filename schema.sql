@@ -87,17 +87,32 @@ CREATE OR REPLACE FUNCTION insert_record_type(VARCHAR)
 	AS $$
 	DECLARE
 		rt_id INT;
-		create_sql TEXT;
 	BEGIN
 		INSERT INTO record_type (name) VALUES ($1) RETURNING id INTO rt_id;
-		create_sql := 'CREATE TABLE record__' || rt_id::text || ' ( ' ||
+		RETURN rt_id;
+	EXCEPTION WHEN UNIQUE_VIOLATION THEN
+		SELECT id INTO rt_id FROM record_type WHERE name = $1;
+		RETURN rt_id;
+	END;
+	$$;
+
+-- Takes record_type.name and tld.id as input
+CREATE OR REPLACE FUNCTION ensure_record_table(VARCHAR, INT)
+	RETURNS INT
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+		rt_id INT;
+		create_sql TEXT;
+	BEGIN
+		SELECT insert_record_type($1) INTO rt_id;
+		create_sql := 'CREATE TABLE record__' || rt_id::text || '_' || $2::text || ' ( ' ||
 			'CHECK (record_type = ' || rt_id || ' ), ' ||
 			'PRIMARY KEY (uuid)' ||
 	       ') INHERITS (record)';
 		EXECUTE create_sql;
 		RETURN rt_id;
-	EXCEPTION WHEN UNIQUE_VIOLATION THEN
-		SELECT id INTO rt_id FROM record_type WHERE name = $1;
+	EXCEPTION WHEN duplicate_table THEN
 		RETURN rt_id;
 	END;
 	$$;

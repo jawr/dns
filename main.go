@@ -25,8 +25,8 @@ func main() {
 	//err = p.SetupGunzipFile("/home/jawr/dns/zonefiles/20141113-net.zone.gz")
 	//err = p.SetupFile("/home/jawr/dns/zonefiles/biz.zone")
 	files := []string{
-		"20141113-net.zone.gz",
-		"20140621-biz.zone.gz",
+		//"20141113-net.zone.gz",
+		//"20140621-biz.zone.gz",
 		"20140622-biz.zone.gz",
 		"20141210-biz.zone.gz",
 	}
