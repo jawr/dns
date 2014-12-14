@@ -22,10 +22,11 @@ func parseWhois() {
 	}
 
 	p := whois.New()
-	err = p.Parse(d)
+	w, err := p.Parse(d)
 	if err != nil {
 		log.Error("Unable to parse domain: %s", err)
 	}
+	log.Info("%s", w)
 }
 
 func parseZonefiles() {

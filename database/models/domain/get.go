@@ -31,10 +31,9 @@ func Search(params url.Values, idx, limit int) ([]Domain, error) {
 	var args []interface{}
 	i := 1
 	for k, _ := range params {
+		fmt.Println(k)
 		switch k {
-		case "name":
-		case "uuid":
-		case "tld":
+		case "name", "uuid", "tld":
 			where = append(where, fmt.Sprintf(k+" = $%d", i))
 			args = append(args, params.Get(k))
 			i++

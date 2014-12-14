@@ -1,10 +1,12 @@
 package domain
 
 import (
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	db "github.com/jawr/dns/database/models/domain"
 	"github.com/jawr/dns/rest/paginator"
 	"github.com/jawr/dns/rest/util"
+	"github.com/jawr/dns/rest/whois"
 	"net/http"
 )
 
@@ -16,6 +18,10 @@ func Setup(r *mux.Router) {
 	sr := r.PathPrefix("/domain").Subrouter()
 	sr.HandleFunc("/", paginator.Paginate(d.Search))
 	sr.HandleFunc("/{uuid}", d.GetUUID)
+
+	w := whois.Whois{}
+	wsr := sr.PathPrefix("/{uuid}/whois").Subrouter()
+	wsr.HandleFunc("/", injectDomainUUID(paginator.Paginate((w.Search))))
 }
 
 func (d Domain) Search(w http.ResponseWriter, r *http.Request, query map[string][]string, idx, limit int) {
@@ -28,4 +34,14 @@ func (d Domain) GetUUID(w http.ResponseWriter, r *http.Request) {
 	uuid := vars["uuid"]
 	i, err := db.Get(db.GetByUUID(), uuid)
 	util.ToJSON(i, err, w)
+}
+
+func injectDomainUUID(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer context.Clear(r)
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		context.Set(r, "domain", uuid)
+		fn(w, r)
+	}
 }

@@ -16,13 +16,13 @@ func New() Parser {
 	return parser
 }
 
-func (p *Parser) Parse(d domain.Domain) error {
+func (p *Parser) Parse(d domain.Domain) (whois.Whois, error) {
 	defer util.Un(util.Trace())
 	log.Info("Parse " + d.String())
 	out, err := exec.Command("pwhois", "-j", d.String()).Output()
 	if err != nil {
-		return err
+		return whois.Whois{}, err
 	}
 	w := whois.New(d, out)
-	return w.Insert()
+	return w, w.Insert()
 }
