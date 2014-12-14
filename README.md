@@ -25,6 +25,8 @@ Domain
 | -------- | ------ | ------- | --------- |
 | GET | /domain  | Array | Return an array of Domain objects. Searchable. |
 | GET | /domain/{uuid} | Object | Return an instance of a Domain by UUID. |
+| GET | /domain/{uuid}/whois/ | Array | Return an array of Whois objects filtered by Domain. Searchable. |
+| POST | /domain/{uuid}/whois/ | Array | Creates a new Whois instance. Returns Domain's Whois records. |
 
 Record
 ------
