@@ -3,6 +3,7 @@ package util
 import (
 	"encoding/json"
 	"net/http"
+	"reflect"
 )
 
 func Use(handler http.HandlerFunc, mid ...func(http.Handler) http.HandlerFunc) http.HandlerFunc {
@@ -25,6 +26,11 @@ func ToJSON(v interface{}, err error, w http.ResponseWriter) {
 	if err != nil {
 		parseError(err, w)
 		return
+	}
+	if reflect.TypeOf(v).Kind() == reflect.Slice {
+		if reflect.ValueOf(v).Len() == 0 {
+			b = []byte("[]")
+		}
 	}
 	w.Write(b)
 }

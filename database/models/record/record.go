@@ -16,13 +16,13 @@ type RecordArgs struct {
 }
 
 type Record struct {
-	UUID       uuid.UUID
-	Domain     domain.Domain
-	Name       string
-	Args       RecordArgs
-	RecordType record_type.RecordType
-	Date       time.Time
-	Added      time.Time
+	UUID       uuid.UUID              `json:"uuid"`
+	Domain     domain.Domain          `json:"domain"`
+	Name       string                 `json:"name"`
+	Args       RecordArgs             `json:"args"`
+	RecordType record_type.RecordType `json:"type"`
+	Date       time.Time              `json:"parse_date"`
+	Added      time.Time              `json:"added"`
 }
 
 func New(name string, date time.Time, d domain.Domain, args RecordArgs, rt record_type.RecordType) Record {

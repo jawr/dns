@@ -1,8 +1,11 @@
 package tld
 
 import (
+	"fmt"
 	"github.com/jawr/dns/database/cache"
 	"github.com/jawr/dns/database/connection"
+	"net/url"
+	"strings"
 )
 
 type TLD struct {
@@ -32,8 +35,16 @@ func New(name string) (TLD, error) {
 
 func (t TLD) UID() string { return t.Name }
 
+const (
+	SELECT string = "SELECT * FROM tld "
+)
+
+func GetAll() string {
+	return SELECT
+}
+
 func GetByID() string {
-	return "SELECT * FROM tld WHERE id = $1"
+	return SELECT + "WHERE id = $1"
 }
 
 func parseRow(row connection.Row) (TLD, error) {
@@ -41,6 +52,30 @@ func parseRow(row connection.Row) (TLD, error) {
 	err := row.Scan(&rt.ID, &rt.Name)
 	return rt, err
 
+}
+
+func Search(params url.Values, idx, limit int) ([]TLD, error) {
+	query := GetAll()
+	var where []string
+	var args []interface{}
+	i := 1
+	for k, _ := range params {
+		switch k {
+		case "name":
+			where = append(where, fmt.Sprintf("name = $%d", i))
+			args = append(args, strings.ToLower(params.Get(k)))
+			i++
+		case "id":
+			where = append(where, fmt.Sprintf("id = $%d", i))
+			args = append(args, params.Get(k))
+			i++
+		}
+	}
+	if len(where) > 0 {
+		query += "WHERE " + strings.Join(where, " AND ") + " "
+	}
+	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, idx)
+	return GetList(query, args...)
 }
 
 func Get(query string, args ...interface{}) (TLD, error) {
