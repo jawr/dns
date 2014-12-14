@@ -62,11 +62,8 @@ func Search(params url.Values, idx, limit int) ([]TLD, error) {
 	for k, _ := range params {
 		switch k {
 		case "name":
-			where = append(where, fmt.Sprintf("name = $%d", i))
-			args = append(args, strings.ToLower(params.Get(k)))
-			i++
 		case "id":
-			where = append(where, fmt.Sprintf("id = $%d", i))
+			where = append(where, fmt.Sprintf(k+" = $%d", i))
 			args = append(args, params.Get(k))
 			i++
 		}

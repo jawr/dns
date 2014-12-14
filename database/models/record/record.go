@@ -65,3 +65,12 @@ func (r Record) Insert() error {
 	)
 	return err
 }
+
+func (r *RecordArgs) Scan(src interface{}) error {
+	return json.Unmarshal(src.([]byte), r)
+}
+
+func (r *RecordArgs) Unmarshal(data []byte) error {
+	fmt.Println(string(data))
+	return nil
+}

@@ -1,9 +1,12 @@
 package record_type
 
 import (
+	"fmt"
 	"github.com/jawr/dns/database/cache"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/tld"
+	"net/url"
+	"strings"
 )
 
 type RecordType struct {
@@ -33,8 +36,20 @@ func New(name string, t tld.TLD) (RecordType, error) {
 
 func (rt RecordType) UID() string { return rt.Name }
 
+const (
+	SELECT string = "SELECT * FROM record_type "
+)
+
+func GetAll() string {
+	return SELECT
+}
+
 func GetByID() string {
-	return "SELECT * FROM record_type WHERE id = $1"
+	return SELECT + "WHERE id = $1"
+}
+
+func GetByName() string {
+	return SELECT + "WHERE name = $1"
 }
 
 func parseRow(row connection.Row) (RecordType, error) {
@@ -71,4 +86,25 @@ func GetList(query string, args ...interface{}) ([]RecordType, error) {
 		list = append(list, rt)
 	}
 	return list, rows.Err()
+}
+
+func Search(params url.Values, idx, limit int) ([]RecordType, error) {
+	query := GetAll()
+	var where []string
+	var args []interface{}
+	i := 1
+	for k, _ := range params {
+		switch k {
+		case "name":
+		case "id":
+			where = append(where, fmt.Sprintf(k+" = $%d", i))
+			args = append(args, params.Get(k))
+			i++
+		}
+	}
+	if len(where) > 0 {
+		query += "WHERE " + strings.Join(where, " AND ") + " "
+	}
+	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, idx)
+	return GetList(query, args...)
 }

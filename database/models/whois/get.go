@@ -1,9 +1,46 @@
 package whois
 
 import (
+	"fmt"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/domain"
+	"net/url"
+	"strings"
 )
+
+const (
+	SELECT string = "SELECT * FROM whois "
+)
+
+func GetAll() string {
+	return SELECT
+}
+
+func GetByID() string {
+	return SELECT + "WHERE id = $1"
+}
+
+func Search(params url.Values, idx, limit int) ([]Whois, error) {
+	query := GetAll()
+	var where []string
+	var args []interface{}
+	i := 1
+	for k, _ := range params {
+		switch k {
+		// TODO: handle times and json
+		case "id":
+		case "domain":
+			where = append(where, fmt.Sprintf(k+" = $%d", i))
+			args = append(args, params.Get(k))
+			i++
+		}
+	}
+	if len(where) > 0 {
+		query += "WHERE " + strings.Join(where, " AND ") + " "
+	}
+	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, idx)
+	return GetList(query, args...)
+}
 
 func parseRow(row connection.Row) (Whois, error) {
 	w := Whois{}
