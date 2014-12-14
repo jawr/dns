@@ -1,6 +1,6 @@
 API
 ===
-The API route can be found at  `/api/v1/`.
+The API route can be found at  `/api/v1/`
 
 Searching
 ---------
@@ -56,7 +56,7 @@ Record
 
 | Method | Endpoint | Return | Description |
 | -------- | ------ | ------- | --------- |
-| GET | /recgrd  | Array | Return an array of Record objects. Searchable. |
+| GET | /record  | Array | Return an array of Record objects. Searchable. |
 | GET | /record/{uuid} | Object | Return an instance of a Record by UUID. |
 
 Record Type
@@ -90,10 +90,11 @@ TLD
 | GET | /tld/{id} | Object | Return an instance of a TLD by ID. |
 | GET | /tld/{name} | Object | Return an instance of a TLD by Name. |
 
+Whois
 -----
 ```
 {
-    	"added": "2014-12-13T20:49:08.126472+01:00", 
+	"added": "2014-12-13T20:49:08.126472+01:00", 
 	"data": "eyJzdGF0dXMiOiBbIm9rIl0sICJ1cGRh=",
 	"domain": {
 		"name": "httk", 
