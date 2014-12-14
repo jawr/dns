@@ -6,6 +6,8 @@ Searching
 ---------
 Endpoints that return an array can be paginated using `limit` and `page` query parameters. Searching on object fields can be done by using the fields name, i.e. `?name=example`. Foreign objects should be refered to by their fk, i.e. `?tld=1`
 
+By default Search endpoints are limited to 15 results with a maximum of 50 results
+
 Domain
 ------
 ```
@@ -97,7 +99,7 @@ Whois
 	"added": "2014-12-13T20:49:08.126472+01:00", 
 	"data": "eyJzdGF0dXMiOiBbIm9rIl0sICJ1cGRh=",
 	"domain": {
-		"name": "httk", 
+		"name": "bbc", 
 		"tld": {
 			"id": 1, 
 			"name": "biz"
@@ -107,6 +109,7 @@ Whois
 	"id": 1
 }
 ```
+The `data` field contains a base64 encoded JSON object that is taken from [python-whois](https://github.com/joepie91/python-whois) output.
 
 | Method | Endpoint | Return | Description |
 | -------- | ------ | ------- | --------- |
