@@ -13,27 +13,27 @@ import (
 	"strconv"
 )
 
-type Whois struct {
+type Result struct {
 }
 
 func Setup(r *mux.Router) {
-	wh := &Whois{}
+	res := &Result{}
 	sr := r.PathPrefix("/whois").Subrouter()
-	sr.HandleFunc("/", paginator.Paginate(wh.Search))
-	sr.HandleFunc("/{id}", wh.GetID)
+	sr.HandleFunc("/", paginator.Paginate(res.Search))
+	sr.HandleFunc("/{id}", res.GetID)
 }
 
-func (wh Whois) Search(w http.ResponseWriter, r *http.Request, query map[string][]string, idx, limit int) {
+func (res Result) Search(w http.ResponseWriter, r *http.Request, query map[string][]string, idx, limit int) {
 	switch r.Method {
 	case "GET":
 		list, err := db.Search(query, idx, limit)
 		util.ToJSON(list, err, w)
 	case "POST":
-		wh.Post(w, r)
+		res.Post(w, r)
 	}
 }
 
-func (wh Whois) GetID(w http.ResponseWriter, r *http.Request) {
+func (res Result) GetID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseInt(vars["id"], 10, 32)
 	if err != nil {
@@ -44,15 +44,15 @@ func (wh Whois) GetID(w http.ResponseWriter, r *http.Request) {
 	util.ToJSON(i, err, w)
 }
 
-func (wh Whois) Post(w http.ResponseWriter, r *http.Request) {
+func (res Result) Post(w http.ResponseWriter, r *http.Request) {
 	uuid, ok := context.GetOk(r, "domain")
 	if !ok {
-		util.ToJSON(db.Whois{}, errors.New("No object found."), w)
+		util.ToJSON(db.Result{}, errors.New("No object found."), w)
 		return
 	}
 	d, err := domain.Get(domain.GetByUUID(), uuid)
 	if err != nil {
-		util.ToJSON(db.Whois{}, err, w)
+		util.ToJSON(db.Result{}, err, w)
 		return
 	}
 

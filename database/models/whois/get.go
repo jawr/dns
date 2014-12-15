@@ -20,7 +20,7 @@ func GetByID() string {
 	return SELECT + "WHERE id = $1"
 }
 
-func Search(params url.Values, idx, limit int) ([]Whois, error) {
+func Search(params url.Values, idx, limit int) ([]Result, error) {
 	query := GetAll()
 	var where []string
 	var args []interface{}
@@ -42,8 +42,8 @@ func Search(params url.Values, idx, limit int) ([]Whois, error) {
 	return GetList(query, args...)
 }
 
-func parseRow(row connection.Row) (Whois, error) {
-	w := Whois{}
+func parseRow(row connection.Row) (Result, error) {
+	w := Result{}
 	var uuid string
 	err := row.Scan(&w.ID, &uuid, &w.Data, &w.Added)
 	if err != nil {
@@ -57,26 +57,26 @@ func parseRow(row connection.Row) (Whois, error) {
 	return w, nil
 }
 
-func Get(query string, args ...interface{}) (Whois, error) {
+func Get(query string, args ...interface{}) (Result, error) {
 	conn, err := connection.Get()
 	if err != nil {
-		return Whois{}, err
+		return Result{}, err
 	}
 	row := conn.QueryRow(query, args...)
 	return parseRow(row)
 }
 
-func GetList(query string, args ...interface{}) ([]Whois, error) {
+func GetList(query string, args ...interface{}) ([]Result, error) {
 	conn, err := connection.Get()
 	if err != nil {
-		return []Whois{}, err
+		return []Result{}, err
 	}
 	rows, err := conn.Query(query, args...)
 	defer rows.Close()
 	if err != nil {
-		return []Whois{}, err
+		return []Result{}, err
 	}
-	var list []Whois
+	var list []Result
 	for rows.Next() {
 		rt, err := parseRow(rows)
 		if err != nil {

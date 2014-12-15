@@ -47,6 +47,10 @@ func GetByID() string {
 	return SELECT + "WHERE id = $1"
 }
 
+func GetByName() string {
+	return SELECT + "WHERE name = $1"
+}
+
 func parseRow(row connection.Row) (TLD, error) {
 	rt := TLD{}
 	err := row.Scan(&rt.ID, &rt.Name)

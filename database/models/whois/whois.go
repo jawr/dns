@@ -9,21 +9,21 @@ import (
 
 type JSON []byte
 
-type Whois struct {
+type Result struct {
 	ID     int32           `json:"id"`
 	Domain domain.Domain   `json:"domain"`
 	Data   json.RawMessage `json:"data"`
 	Added  time.Time       `json:"added"`
 }
 
-func New(d domain.Domain, data []byte) Whois {
-	return Whois{
+func New(d domain.Domain, data []byte) Result {
+	return Result{
 		Domain: d,
 		Data:   data,
 	}
 }
 
-func (w *Whois) Insert() error {
+func (w *Result) Insert() error {
 	conn, err := connection.Get()
 	if err != nil {
 		return err

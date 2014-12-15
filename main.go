@@ -12,6 +12,7 @@ import (
 func main() {
 	h := rest.Setup()
 	http.ListenAndServe(":8080", h)
+	//parseZonefiles()
 }
 
 func parseWhois() {

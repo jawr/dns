@@ -47,6 +47,20 @@ CREATE TABLE whois (
 	PRIMARY KEY (id)
 );
 
+DROP TABLE IF EXISTS parser CASCADE;
+DROP SEQUENCE IF EXISTS parser_id CASCADE;
+CREATE TABLE parser (
+	id SERIAL,
+	filename VARCHAR(150),
+	started_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	finished_at TIMESTAMP WITH TIME ZONE,
+	parser_date DATE NOT NULL,
+	tld INT NOT NULL references tld(id),
+	logs json,
+	PRIMARY KEY (id),
+	UNIQUE (filename)
+);
+
 -- Only use this to populate tld table as it creates a
 -- partitions the domain table
 CREATE OR REPLACE FUNCTION insert_tld(VARCHAR)

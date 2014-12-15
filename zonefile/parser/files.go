@@ -3,41 +3,30 @@ package parser
 import (
 	"bufio"
 	"compress/gzip"
-	"errors"
-	"github.com/jawr/dns/database/models/tld"
+	"fmt"
+	db "github.com/jawr/dns/database/models/zonefile/parser"
 	"github.com/jawr/dns/log"
 	"io"
 	"os"
-	"regexp"
-	"strings"
-	"time"
 )
 
-var tldRe *regexp.Regexp = regexp.MustCompile(`^(\d{8})\-([\w\d\-]+)[\-\.]zone[\-\.](data|gz)`)
-
-var tldFilenameDate string = "20060102"
-
 func (p *Parser) setupFile(filename string, gunzip bool) error {
-	filenameArgs := strings.Split(filename, "/")
-	name := filenameArgs[len(filenameArgs)-1]
-	tldNameArgs := tldRe.FindStringSubmatch(name)
-	if len(tldNameArgs) < 4 {
-		return errors.New("No TLD or date detected in zone filename: " + name)
+	_p, err := db.New(filename)
+	fmt.Printf("_p: %+v\n", _p)
+	if err != nil {
+		log.Error("Unable to setup Zonefile: %s", err)
+		return err
 	}
-	p.tldName = tldNameArgs[2]
-	p.origin = p.tldName + "."
+	p.tld = _p.TLD
+	p.origin = p.tld.Name + "."
+	fmt.Printf("p: %+v\n", p)
 
-	var err error
-	p.tld, err = tld.New(p.tldName)
+	err = p.Insert()
 	if err != nil {
-		log.Error("Unable to get TLD: %s", err)
+		log.Error("Unable to save Zonefile Parser: %s", err)
 		return err
 	}
-	p.date, err = time.Parse(tldFilenameDate, tldNameArgs[1])
-	if err != nil {
-		log.Error("Unable to parse Zonefile date: %s", err)
-		return err
-	}
+
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Error("Unable to open Zonefile: %s", err)

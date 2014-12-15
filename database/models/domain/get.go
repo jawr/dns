@@ -31,11 +31,18 @@ func Search(params url.Values, idx, limit int) ([]Domain, error) {
 	var args []interface{}
 	i := 1
 	for k, _ := range params {
-		fmt.Println(k)
 		switch k {
-		case "name", "uuid", "tld":
+		case "name", "uuid":
 			where = append(where, fmt.Sprintf(k+" = $%d", i))
 			args = append(args, params.Get(k))
+			i++
+		case "tld":
+			where = append(where, fmt.Sprintf(k+" = $%d", i))
+			t, err := tld.Get(tld.GetByName(), params.Get(k))
+			if err != nil {
+				return []Domain{}, err
+			}
+			args = append(args, t.ID)
 			i++
 		}
 	}
@@ -43,6 +50,7 @@ func Search(params url.Values, idx, limit int) ([]Domain, error) {
 		query += "WHERE " + strings.Join(where, " AND ") + " "
 	}
 	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, idx)
+	fmt.Println(query)
 	return GetList(query, args...)
 }
 

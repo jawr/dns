@@ -6,6 +6,7 @@ import (
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/domain"
 	"github.com/jawr/dns/database/models/record_type"
+	"github.com/jawr/dns/database/models/tld"
 	"net/url"
 	"strings"
 )
@@ -30,13 +31,25 @@ func Search(params url.Values, idx, limit int) ([]Record, error) {
 	for k, _ := range params {
 		switch k {
 		// TODO: handle times and json
-		case "name":
-		case "domain":
-		case "type":
-		case "uuid":
-		case "tld":
+		case "name", "domain", "uuid", "record_type":
 			where = append(where, fmt.Sprintf(k+" = $%d", i))
 			args = append(args, params.Get(k))
+			i++
+		case "tld":
+			where = append(where, fmt.Sprintf(k+" = $%d", i))
+			t, err := tld.Get(tld.GetByName(), params.Get(k))
+			if err != nil {
+				return []Record{}, err
+			}
+			args = append(args, t.ID)
+			i++
+		case "type":
+			where = append(where, fmt.Sprintf(k+" = $%d", i))
+			rt, err := record_type.Get(record_type.GetByName(), params.Get(k))
+			if err != nil {
+				return []Record{}, err
+			}
+			args = append(args, rt.ID)
 			i++
 		}
 	}

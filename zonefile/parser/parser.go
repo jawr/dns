@@ -7,6 +7,7 @@ import (
 	"github.com/jawr/dns/database/models/domain"
 	"github.com/jawr/dns/database/models/record"
 	"github.com/jawr/dns/database/models/tld"
+	db "github.com/jawr/dns/database/models/zonefile/parser"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/util"
 	"strconv"
@@ -18,7 +19,6 @@ type Parser struct {
 	scanner        *bufio.Scanner
 	setupFileDefer func()
 	tld            tld.TLD
-	tldName        string
 	date           time.Time
 	ttl            uint
 	origin         string
@@ -28,6 +28,7 @@ type Parser struct {
 	domainInsert   *bulk.Insert
 	recordInsert   *bulk.Insert
 	recordTypes    map[string]int32
+	db.Parser
 }
 
 func New() Parser {
@@ -51,6 +52,8 @@ func (p *Parser) Close() {
 	log.Debug("Closing %s Parser:domainInsert", p.String())
 	p.domainInsert.Close()
 	log.Debug("Closed %s Parser", p.String())
+	p.Update("Parse finished.")
+	p.Finish()
 }
 
 func (p *Parser) Parse() error {
@@ -68,6 +71,10 @@ func (p *Parser) Parse() error {
 	p.recordTypes = make(map[string]int32)
 	p.domainInsert = &bi
 	log.Info("Parsing Zonefile: %s", p.String())
+	err = p.Update("Load file in to temporary tables.")
+	if err != nil {
+		return err
+	}
 	var previous string
 	p.lineCount = 0
 	func() {
@@ -105,15 +112,40 @@ func (p *Parser) Parse() error {
 			}
 			previous = line
 		}
+		err = p.Update("File read in to temporary tables.")
+		if err != nil {
+			return
+		}
 		log.Info("Parse %s complete. Proceed with sql operations.", p.String())
 	}()
 	// insert our domains and commit our tx to avoid
+	err = p.Update("Close insert domains statement.")
+	if err != nil {
+		return err
+	}
 	p.domainInsert.Insert()
+	err = p.Update("Close insert records statement.")
+	if err != nil {
+		return err
+	}
 	p.recordInsert.Insert()
 	// TODO: drop index to record__%d_%d
 	// create index's
+	err = p.Update("Create temp domain table index.")
+	if err != nil {
+		return err
+	}
+
 	err = p.domainInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
+	err = p.Update("Create temp record table index.")
+	if err != nil {
+		return err
+	}
 	err = p.recordInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
+	err = p.Update("Merge temp domain with domain.")
+	if err != nil {
+		return err
+	}
 	err = p.domainInsert.Merge(
 		fmt.Sprintf(`
 			INSERT INTO domain__%d
@@ -129,7 +161,11 @@ func (p *Parser) Parse() error {
 	if err != nil {
 		return err
 	}
-	for _, rtID := range p.recordTypes {
+	for rtName, rtID := range p.recordTypes {
+		err = p.Update("Merge temp record with record (type: %s).", rtName)
+		if err != nil {
+			return err
+		}
 		err = p.recordInsert.Merge(
 			fmt.Sprintf(`
 				INSERT INTO record__%d_%d
@@ -150,8 +186,16 @@ func (p *Parser) Parse() error {
 			return err
 		}
 	}
+	err = p.Update("Commit domain insert.")
+	if err != nil {
+		return err
+	}
 	p.domainInsert.Finish()
 	// TODO: add index to record__%d_%d
+	err = p.Update("Commit record insert.")
+	if err != nil {
+		return err
+	}
 	p.recordInsert.Finish()
 	log.Info("Parse %s complete", p.String())
 	return nil
