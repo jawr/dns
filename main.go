@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/jawr/dns/database/models/domain"
+	"github.com/jawr/dns/database/models/tld"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest"
 	whois "github.com/jawr/dns/whois/parser"
@@ -10,9 +11,42 @@ import (
 )
 
 func main() {
+	startREST()
+
+	s, t, err := tld.DetectDomainAndTLD("ns1.google.co.uk")
+	if err != nil {
+		log.Error("%s", err)
+		return
+	}
+	log.Info("%+v", t)
+	log.Info("%+v", s)
+	s, t, err = tld.DetectDomainAndTLD("ns1.google.co.ng")
+	if err != nil {
+		log.Error("%s", err)
+		return
+	}
+	log.Info("%+v", t)
+	log.Info("%+v", s)
+	s, t, err = tld.DetectDomainAndTLD("ns1.google.co.com")
+	if err != nil {
+		log.Error("%s", err)
+		return
+	}
+	log.Info("%+v", t)
+	log.Info("%+v", s)
+	s, t, err = tld.DetectDomainAndTLD("ns1.google.foo")
+	if err != nil {
+		log.Error("%s", err)
+		return
+	}
+	log.Info("%+v", t)
+	log.Info("%+v", s)
+
+}
+
+func startREST() {
 	h := rest.Setup()
 	http.ListenAndServe(":8080", h)
-	//parseZonefiles()
 }
 
 func parseWhois() {

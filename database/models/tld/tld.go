@@ -108,3 +108,21 @@ func GetList(query string, args ...interface{}) ([]TLD, error) {
 	}
 	return list, rows.Err()
 }
+
+func Detect(s string) (TLD, error) {
+	t, err := Get(GetByName(), s)
+	if err != nil {
+		args := strings.Split(s, ".")
+		if len(args) > 1 {
+			return Detect(strings.Join(args[1:], "."))
+		}
+		return TLD{}, err
+	}
+	return t, err
+}
+
+func DetectDomainAndTLD(s string) (string, TLD, error) {
+	t, err := Detect(s)
+	s = strings.TrimSuffix(s, "."+t.Name)
+	return s, t, err
+}

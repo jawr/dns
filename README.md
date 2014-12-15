@@ -1,12 +1,12 @@
 API
 ===
-The API route can be found at  `/api/v1/`
+The API route can be found at  `/api/v1/`.
 
 Searching
 ---------
-Endpoints that return an array can be paginated using `limit` and `page` query parameters. Searching on object fields can be done by using the fields name, i.e. `?name=example`. Foreign objects should be refered to by their fk, i.e. `?tld=1`
+Endpoints that return an array can be paginated using `limit` and `page` query parameters. Searching on object fields can be done by using the fields name, i.e. `?name=example`. Foreign objects are refered to by their name, i.e. `tld=com` or `tld=co.uk``.
 
-By default Search endpoints are limited to 15 results with a maximum of 50 results
+By default Search endpoints are limited to 15 results with a maximum of 50 results. Pagination can be done using the `page` parameter, i.e. `?limit=50&page=1` -> `?limit=50&page=10`.
 
 Domain
 ------
@@ -25,8 +25,12 @@ Domain
 | -------- | ------ | ------- | --------- |
 | GET | /domain  | Array | Return an array of Domain objects. Searchable. |
 | GET | /domain/{uuid} | Object | Return an instance of a Domain by UUID. |
-| GET | /domain/{uuid}/whois/ | Array | Return an array of Whois objects filtered by Domain. Searchable. |
+| GET | /domain/{uuid}/whois | Array | Return an array of Whois objects filtered by Domain. Searchable. |
+| GET | /domain/{uuid}/records | Array | Return an array of Records objects filtered by Domain. Searchable. |
 | POST | /domain/{uuid}/whois/ | Array | Creates a new Whois instance. Returns Domain's Whois records. |
+| GET | /domain/{name} | Object | Return an instance of a Domain by Name.TLD, i.e. 'google.biz'. |
+| GET | /domain/{name}/whois | Array | Return an array of Record objects filtered by Domain. Searchable. |
+| GET | /domain/{name}/records | Array | Return an array of Records objects filtered by Domain. Searchable. |
 
 Record
 ------
