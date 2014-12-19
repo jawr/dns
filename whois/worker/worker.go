@@ -31,7 +31,7 @@ func (w Worker) Start() {
 
 			select {
 			case work := <-w.Work:
-				log.Debug("worker%d: got request for %s\n", w.ID, work.Query)
+				log.Debug("worker%d: got request for %s\n", w.ID, work.Domain.String())
 				work.Do(w)
 
 			case <-w.QuitChan:

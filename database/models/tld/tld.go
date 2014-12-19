@@ -124,5 +124,6 @@ func Detect(s string) (TLD, error) {
 func DetectDomainAndTLD(s string) (string, TLD, error) {
 	t, err := Detect(s)
 	s = strings.TrimSuffix(s, "."+t.Name)
-	return s, t, err
+	args := strings.Split(s, ".")
+	return args[len(args)-1], t, err
 }

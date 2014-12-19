@@ -25,7 +25,11 @@ func GetAll() string {
 	return SELECT
 }
 
-func Search(params url.Values, idx, limit int) ([]Domain, error) {
+func GetAllLimitOffset() string {
+	return SELECT + "LIMIT $1 OFFSET $2"
+}
+
+func Search(params url.Values, offset, limit int) ([]Domain, error) {
 	query := GetAll()
 	var where []string
 	var args []interface{}
@@ -49,7 +53,7 @@ func Search(params url.Values, idx, limit int) ([]Domain, error) {
 	if len(where) > 0 {
 		query += "WHERE " + strings.Join(where, " AND ") + " "
 	}
-	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, idx)
+	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
 	fmt.Println(query)
 	return GetList(query, args...)
 }

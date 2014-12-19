@@ -7,7 +7,6 @@ import (
 	"github.com/jawr/dns/rest"
 	"github.com/jawr/dns/whois/dispatcher"
 	whois "github.com/jawr/dns/whois/parser"
-	"github.com/jawr/dns/whois/worker"
 	zonefile "github.com/jawr/dns/zonefile/parser"
 	"net/http"
 )
@@ -15,22 +14,12 @@ import (
 func main() {
 	//parseZonefiles()
 
-	d := dispatcher.New(2)
-	d.Start()
-
-	w1 := worker.Request{"google.com"}
-	w2 := worker.Request{"google.biz"}
-	w3 := worker.Request{"amazon.biz"}
-	w4 := worker.Request{"lawrence.biz"}
-	w5 := worker.Request{"law.biz"}
-	w6 := worker.Request{"wikipedia.biz"}
-
-	d.Work <- w1
-	d.Work <- w2
-	d.Work <- w3
-	d.Work <- w4
-	d.Work <- w5
-	d.Work <- w6
+	dispatcher.AddQuery("ns1.google.co.uk")
+	dispatcher.AddQuery("ns2.google.co.uk")
+	dispatcher.AddQuery("ns3.google.co.uk")
+	dispatcher.AddQuery("ns4.google.co.uk")
+	dispatcher.AddQuery("ns5.google.co.uk")
+	dispatcher.AddQuery("ns6.google.co.uk")
 
 	startREST()
 
