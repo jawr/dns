@@ -27,8 +27,8 @@ func Get() (*sql.DB, error) {
 }
 
 func (c *connection) setup() error {
-	conn, err := sql.Open(
-		fmt.Sprintf("postgres", "user=%s password=%s dbname=%s host=%s sslmode=disable",
+	conn, err := sql.Open("postgres",
+		fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=disable",
 			user,
 			pass,
 			name,
