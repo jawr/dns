@@ -6,20 +6,16 @@ import (
 	"github.com/jawr/dns/database/bulk"
 	"github.com/jawr/dns/database/models/domain"
 	"github.com/jawr/dns/database/models/record"
-	"github.com/jawr/dns/database/models/tld"
 	db "github.com/jawr/dns/database/models/zonefile/parser"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/util"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Parser struct {
 	scanner        *bufio.Scanner
 	setupFileDefer func()
-	tld            tld.TLD
-	date           time.Time
 	ttl            uint
 	origin         string
 	originCheck    bool
@@ -40,7 +36,7 @@ func New() Parser {
 }
 
 func (p Parser) String() string {
-	return fmt.Sprintf("%s (%s)", p.tld.Name, p.date)
+	return fmt.Sprintf("%s (%s)", p.TLD.Name, p.Date.Format("02-01-2006"))
 }
 
 func (p *Parser) Close() {
@@ -73,6 +69,7 @@ func (p *Parser) Parse() error {
 	log.Info("Parsing Zonefile: %s", p.String())
 	err = p.Update("Load file in to temporary tables.")
 	if err != nil {
+		log.Error("%s", err)
 		return err
 	}
 	var previous string
@@ -114,6 +111,7 @@ func (p *Parser) Parse() error {
 		}
 		err = p.Update("File read in to temporary tables.")
 		if err != nil {
+			log.Error("Unable to read in temporary tables: %s", err)
 			return
 		}
 		log.Info("Parse %s complete. Proceed with sql operations.", p.String())
@@ -154,8 +152,8 @@ func (p *Parser) Parse() error {
 					SELECT NULL FROM domain__%d d WHERE
 						d.uuid = d2.uuid
 				)`,
-			p.tld.ID,
-			p.tld.ID,
+			p.TLD.ID,
+			p.TLD.ID,
 		),
 	)
 	if err != nil {
@@ -175,9 +173,9 @@ func (p *Parser) Parse() error {
 							r.uuid = r2.uuid AND r.record_type = %d
 					) AND r2.record_type = %d`,
 				rtID,
-				p.tld.ID,
+				p.TLD.ID,
 				rtID,
-				p.tld.ID,
+				p.TLD.ID,
 				rtID,
 				rtID,
 			),

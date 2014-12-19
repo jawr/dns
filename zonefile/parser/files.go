@@ -3,7 +3,6 @@ package parser
 import (
 	"bufio"
 	"compress/gzip"
-	"fmt"
 	db "github.com/jawr/dns/database/models/zonefile/parser"
 	"github.com/jawr/dns/log"
 	"io"
@@ -12,14 +11,14 @@ import (
 
 func (p *Parser) setupFile(filename string, gunzip bool) error {
 	_p, err := db.New(filename)
-	fmt.Printf("_p: %+v\n", _p)
 	if err != nil {
 		log.Error("Unable to setup Zonefile: %s", err)
 		return err
 	}
-	p.tld = _p.TLD
-	p.origin = p.tld.Name + "."
-	fmt.Printf("p: %+v\n", p)
+	p.Filename = _p.Filename
+	p.TLD = _p.TLD
+	p.Date = _p.Date
+	p.origin = p.TLD.Name + "."
 
 	err = p.Insert()
 	if err != nil {

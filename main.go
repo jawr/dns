@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+	parseZonefiles()
+
 	startREST()
 
 	s, t, err := tld.DetectDomainAndTLD("ns1.google.co.uk")

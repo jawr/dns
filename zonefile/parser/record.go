@@ -28,7 +28,7 @@ func (p Parser) buildRecordRow(r Record) (record.Record, error) {
 		Args: r.Args,
 	}
 
-	rt, err := record_type.New(r.RecordType, p.tld)
+	rt, err := record_type.New(r.RecordType, p.TLD)
 	if err != nil {
 		log.Error("Unable to create RecordType: %s", err)
 		return record.Record{}, err
@@ -41,7 +41,7 @@ func (p Parser) buildRecordRow(r Record) (record.Record, error) {
 		return record.Record{}, err
 	}
 
-	rr := record.New(r.Name, p.date, d, args, rt)
+	rr := record.New(r.Name, p.Date, d, args, rt)
 
 	if rr.Name == domain.CleanDomain(r.Name, d.TLD) {
 		rr.Name = "@"
@@ -83,6 +83,6 @@ func (p Parser) getRecord(fields []string) (record.Record, error) {
 		return record.Record{}, errors.New("Unable to detect Record Type.")
 	}
 	r.Args = fields[typeIdx+1:]
-	r.TLD = p.tld
+	r.TLD = p.TLD
 	return p.buildRecordRow(r)
 }
