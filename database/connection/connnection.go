@@ -2,7 +2,9 @@ package connection
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/lib/pq"
+	"github.com/stathat/jconfig"
 )
 
 type connection struct {
@@ -25,10 +27,30 @@ func Get() (*sql.DB, error) {
 }
 
 func (c *connection) setup() error {
-	conn, err := sql.Open("postgres", "user=dns password=dns!pass$ dbname=dns host=/var/run/postgresql/ sslmode=disable")
+	conn, err := sql.Open(
+		fmt.Sprintf("postgres", "user=%s password=%s dbname=%s host=%s sslmode=disable",
+			user,
+			pass,
+			name,
+			host,
+		),
+	)
 	if err != nil {
 		return err
 	}
 	c.db = conn
 	return nil
+}
+
+var host, user, pass, name string
+
+func init() {
+	config := jconfig.LoadConfig("config.json")
+	host = config.GetString("db_host")
+	user = config.GetString("db_user")
+	pass = config.GetString("db_pass")
+	name = config.GetString("db_name")
+	if len(host+user+pass+name) == 0 {
+		panic("error setup config file for database connection")
+	}
 }

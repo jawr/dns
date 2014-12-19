@@ -5,21 +5,15 @@ import (
 	"github.com/jawr/dns/database/models/tld"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest"
-	"github.com/jawr/dns/whois/dispatcher"
+	"github.com/jawr/dns/whois/crawler"
 	whois "github.com/jawr/dns/whois/parser"
 	zonefile "github.com/jawr/dns/zonefile/parser"
 	"net/http"
 )
 
 func main() {
-	//parseZonefiles()
-
-	dispatcher.AddQuery("ns1.google.co.uk")
-	dispatcher.AddQuery("ns2.google.co.uk")
-	dispatcher.AddQuery("ns3.google.co.uk")
-	dispatcher.AddQuery("ns4.google.co.uk")
-	dispatcher.AddQuery("ns5.google.co.uk")
-	dispatcher.AddQuery("ns6.google.co.uk")
+	whoisCrawler := crawler.New(2)
+	whoisCrawler.Start()
 
 	startREST()
 
