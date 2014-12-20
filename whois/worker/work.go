@@ -17,6 +17,10 @@ func (r Request) Do(w Worker) {
 		log.Error("worker%d: unable to parse domain: %s", w.ID, err)
 		return
 	}
-	log.Info("worker%d: got result for domain", w.ID)
-	r.Result <- res
+	select {
+	case r.Result <- res:
+		break
+	default:
+		break
+	}
 }

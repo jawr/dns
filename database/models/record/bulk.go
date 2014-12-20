@@ -10,7 +10,7 @@ func NewBulkInsert() (bulk.Insert, error) {
 		uuid UUID,
 		domain UUID,
 		name TEXT,
-		args json,
+		args jsonb,
 		record_type INT,
 		parser_date DATE
 	) ON COMMIT DROP`

@@ -55,6 +55,10 @@ func (p *Parser) Exec(d domain.Domain) (whois.Result, error) {
 	if err != nil {
 		return whois.Result{}, err
 	}
-	w := whois.New(d, out)
+	w, err := whois.New(d, out)
+	if err != nil {
+		log.Error("Parse Whois for %s: %s", d.String(), err)
+		return w, err
+	}
 	return w, w.Insert()
 }

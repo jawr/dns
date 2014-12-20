@@ -30,7 +30,7 @@ CREATE TABLE record (
 	uuid UUID,
 	domain UUID NOT NULL references domain(uuid),
 	name VARCHAR(255),
-	args json,
+	args jsonb,
 	record_type INT NOT NULL references record_type(id),
 	parser_date DATE NOT NULL,
 	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -42,7 +42,10 @@ DROP SEQUENCE IF EXISTS whois_id CASCADE;
 CREATE TABLE whois (
 	id SERIAL,
 	domain UUID,
-	data json,
+	data jsonb,
+	raw_whois jsonb,
+	contacts jsonb,
+	emails jsonb,
 	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (id)
 );
@@ -56,7 +59,7 @@ CREATE TABLE parser (
 	finished_at TIMESTAMP WITH TIME ZONE,
 	parser_date DATE NOT NULL,
 	tld INT NOT NULL references tld(id),
-	logs json,
+	logs jsonb,
 	PRIMARY KEY (id),
 	UNIQUE (filename)
 );

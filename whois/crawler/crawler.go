@@ -24,7 +24,6 @@ func New(delay int) Crawler {
 }
 
 func (c Crawler) Start() {
-	log.Info("hello...")
 	go func() {
 		for {
 			select {
@@ -33,7 +32,6 @@ func (c Crawler) Start() {
 				return
 			default:
 				domains, err := domain.GetList(domain.GetAllLimitOffset(), WINDOW, c.offset)
-				log.Info("Got list..")
 				if err != nil {
 					log.Error("Whois crawler. Unable to get domains: %s", err)
 					// shutdown
