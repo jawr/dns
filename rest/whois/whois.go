@@ -21,6 +21,7 @@ func Setup(r *mux.Router) {
 	sr := r.PathPrefix("/whois").Subrouter()
 	sr.HandleFunc("/", paginator.Paginate(res.Search))
 	sr.HandleFunc("/{id}", res.GetID)
+	sr.HandleFunc("/query/", res.Query)
 }
 
 func (res Result) Search(w http.ResponseWriter, r *http.Request, query map[string][]string, idx, limit int) {
@@ -30,6 +31,13 @@ func (res Result) Search(w http.ResponseWriter, r *http.Request, query map[strin
 		util.ToJSON(list, err, w)
 	case "POST":
 		res.Post(w, r)
+	}
+}
+
+func (res Result) Query(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		res.PostQuery(w, r)
 	}
 }
 

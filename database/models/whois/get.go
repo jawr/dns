@@ -1,6 +1,7 @@
 package whois
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/domain"
@@ -18,6 +19,10 @@ func GetAll() string {
 
 func GetByID() string {
 	return SELECT + "WHERE id = $1"
+}
+
+func GetByHasEmail() string {
+	return SELECT + "WHERE emails ? $1"
 }
 
 func Search(params url.Values, idx, limit int) ([]Result, error) {
@@ -45,7 +50,12 @@ func Search(params url.Values, idx, limit int) ([]Result, error) {
 func parseRow(row connection.Row) (Result, error) {
 	w := Result{}
 	var uuid string
-	err := row.Scan(&w.ID, &uuid, &w.Data, &w.Added)
+	var b []byte
+	err := row.Scan(&w.ID, &uuid, &w.Data, &w.Raw, &w.Contacts, &b, &w.Added)
+	if err != nil {
+		return w, err
+	}
+	err = json.Unmarshal(b, &w.Emails)
 	if err != nil {
 		return w, err
 	}

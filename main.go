@@ -14,10 +14,10 @@ import (
 
 func main() {
 	//go parseZonefiles()
-	crawlWhois()
+	//crawlWhois()
+	startREST()
 	q := make(chan bool)
 	<-q
-	startREST()
 }
 
 func crawlWhois() {
