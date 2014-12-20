@@ -124,7 +124,7 @@ The `data` field contains a base64 encoded JSON object that is taken from [pytho
 | GET | /whois/{id} | Object | Return an instance of a Whois by ID. |
 | POST | /whois/query/ | Array | Perform a Whois query. See below for more information. |
 
-# Query
+### Query
 You can perform queries on the `/whois/query/` endpoint, the endpoint takes a JSON object where you define your query:
 
 ```
