@@ -120,4 +120,5 @@ The `data` field contains a base64 encoded JSON object that is taken from [pytho
 | Method | Endpoint | Return | Description |
 | -------- | ------ | ------- | --------- |
 | GET | /whois  | Array | Return an array of Whois objects. Searchable. |
+| POST | /whois  | Object | Create a Whois instance. Post accepts JSON parameters: `{"domain": "<uuid>"}` or `{"query": "<query>"}`. Return a Whois object.|
 | GET | /whois/{id} | Object | Return an instance of a Whois by ID. |

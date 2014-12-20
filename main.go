@@ -8,15 +8,21 @@ import (
 	"github.com/jawr/dns/whois/crawler"
 	whois "github.com/jawr/dns/whois/parser"
 	zonefile "github.com/jawr/dns/zonefile/parser"
+	"github.com/stathat/jconfig"
 	"net/http"
 )
 
 func main() {
+	//go parseZonefiles()
+	startREST()
+}
+
+func crawlWhois() {
 	whoisCrawler := crawler.New(2)
 	whoisCrawler.Start()
+}
 
-	startREST()
-
+func testDetectDomainAndTLD() {
 	s, t, err := tld.DetectDomainAndTLD("ns1.google.co.uk")
 	if err != nil {
 		log.Error("%s", err)
@@ -69,6 +75,8 @@ func parseWhois() {
 }
 
 func parseZonefiles() {
+	config := jconfig.LoadConfig("config.json")
+	dir := config.GetString("zonefile_dir")
 	p := zonefile.New()
 	files := []string{
 		//"20141113-net.zone.gz",
@@ -77,7 +85,7 @@ func parseZonefiles() {
 		"20141210-biz.zone.gz",
 	}
 	for _, f := range files {
-		err := p.SetupGunzipFile("/home/jawr/dns/zonefiles/" + f)
+		err := p.SetupGunzipFile(dir + f)
 		if err != nil {
 			log.Error("Unable to setup %s: %s", f, err)
 			return

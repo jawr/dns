@@ -1,14 +1,14 @@
 package whois
 
 import (
-	"errors"
-	"github.com/gorilla/context"
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/jawr/dns/database/models/domain"
 	db "github.com/jawr/dns/database/models/whois"
+	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest/paginator"
 	"github.com/jawr/dns/rest/util"
-	"github.com/jawr/dns/whois/parser"
+	"github.com/jawr/dns/whois/dispatcher"
 	"net/http"
 	"strconv"
 )
@@ -44,19 +44,38 @@ func (res Result) GetID(w http.ResponseWriter, r *http.Request) {
 	util.ToJSON(i, err, w)
 }
 
+type Post struct {
+	UUID  string `json:"uuid,omitempty"`
+	Query string `json:"query,omitempty"`
+}
+
 func (res Result) Post(w http.ResponseWriter, r *http.Request) {
-	uuid, ok := context.GetOk(r, "domain")
-	if !ok {
-		util.ToJSON(db.Result{}, errors.New("No object found."), w)
-		return
-	}
-	d, err := domain.Get(domain.GetByUUID(), uuid)
+	log.Info("%+v", r.Body)
+	decoder := json.NewDecoder(r.Body)
+	var post Post
+	err := decoder.Decode(&post)
 	if err != nil {
 		util.ToJSON(db.Result{}, err, w)
 		return
 	}
+	log.Info("%+v", post)
+	if len(post.UUID) > 0 {
+		d, err := domain.Get(domain.GetByUUID(), post.UUID)
+		if err != nil {
+			util.ToJSON(db.Result{}, err, w)
+			return
+		}
+		c := dispatcher.AddDomain(d)
+		result := <-c
+		util.ToJSON(result, err, w)
+		return
 
-	p := parser.New()
-	wret, err := p.Parse(d)
-	util.ToJSON(wret, err, w)
+	} else if len(post.Query) > 0 {
+		c := dispatcher.AddQuery(post.Query)
+		result := <-c
+		util.ToJSON(result, err, w)
+		return
+	}
+	// do error
+
 }

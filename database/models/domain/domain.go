@@ -46,11 +46,13 @@ func (d *Domain) Insert() error {
 func CleanDomain(s string, t tld.TLD) string {
 	s = strings.TrimSuffix(s, ".")
 	s = strings.TrimSuffix(s, "."+t.Name)
-	return s
+	args := strings.Split(s, ".")
+	return args[len(args)-1]
 }
 
 func (d Domain) CleanSubdomain(s string) string {
-	s = CleanDomain(s, d.TLD)
+	s = strings.TrimSuffix(s, ".")
+	s = strings.TrimSuffix(s, "."+d.TLD.Name)
 	s = strings.TrimSuffix(s, "."+d.Name)
 	return s
 }
