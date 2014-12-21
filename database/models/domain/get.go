@@ -3,11 +3,15 @@ package domain
 import (
 	"code.google.com/p/go-uuid/uuid"
 	"fmt"
+	"github.com/jawr/dns/database/cache"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/tld"
 	"net/url"
+	"reflect"
 	"strings"
 )
+
+var cacheGetByString = cache.NewCacheString()
 
 const (
 	SELECT string = "SELECT * FROM domain "
@@ -54,7 +58,6 @@ func Search(params url.Values, offset, limit int) ([]Domain, error) {
 		query += "WHERE " + strings.Join(where, " AND ") + " "
 	}
 	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
-	fmt.Println(query)
 	return GetList(query, args...)
 }
 
@@ -73,12 +76,25 @@ func parseRow(row connection.Row) (Domain, error) {
 }
 
 func Get(query string, args ...interface{}) (Domain, error) {
+	var result Domain
+	if len(args) == 1 {
+		switch reflect.TypeOf(args[0]).Kind() {
+		case reflect.String:
+			if i, ok := cacheGetByString.Check(query, args[0].(string)); ok {
+				return i.(Domain), nil
+			}
+			defer func() {
+				cacheGetByString.Add(result, query, args[0].(string))
+			}()
+		}
+	}
 	conn, err := connection.Get()
 	if err != nil {
 		return Domain{}, err
 	}
 	row := conn.QueryRow(query, args...)
-	return parseRow(row)
+	result, err = parseRow(row)
+	return result, err
 }
 
 func GetList(query string, args ...interface{}) ([]Domain, error) {

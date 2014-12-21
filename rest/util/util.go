@@ -14,6 +14,8 @@ func Use(handler http.HandlerFunc, mid ...func(http.Handler) http.HandlerFunc) h
 }
 
 func parseError(err error, w http.ResponseWriter) {
+	// TODO: switch error to decide what error code
+	w.WriteHeader(http.StatusBadRequest)
 	w.Write([]byte(`{"error": "` + err.Error() + `"}`))
 }
 

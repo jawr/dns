@@ -26,6 +26,10 @@ func New(name string, t tld.TLD) Domain {
 	}
 }
 
+func (d Domain) UID() string {
+	return d.UUID.String()
+}
+
 func (d Domain) String() string {
 	return d.Name + "." + d.TLD.Name
 }

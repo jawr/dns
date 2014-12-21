@@ -6,6 +6,7 @@ import (
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/tld"
 	"net/url"
+	"reflect"
 	"strings"
 )
 
@@ -15,6 +16,7 @@ type RecordType struct {
 }
 
 var c = cache.New()
+var cacheGetID = cache.NewCacheInt32()
 
 func New(name string, t tld.TLD) (RecordType, error) {
 	if rt, ok := c.Check(name); ok {
@@ -59,12 +61,25 @@ func parseRow(row connection.Row) (RecordType, error) {
 }
 
 func Get(query string, args ...interface{}) (RecordType, error) {
+	var result RecordType
+	if len(args) == 1 {
+		switch reflect.TypeOf(args[0]).Kind() {
+		case reflect.Int32:
+			if i, ok := cacheGetID.Check(query, args[0].(int32)); ok {
+				return i.(RecordType), nil
+			}
+			defer func() {
+				cacheGetID.Add(result, query, args[0].(int32))
+			}()
+		}
+	}
 	conn, err := connection.Get()
 	if err != nil {
 		return RecordType{}, err
 	}
 	row := conn.QueryRow(query, args...)
-	return parseRow(row)
+	result, err = parseRow(row)
+	return result, err
 }
 
 func GetList(query string, args ...interface{}) ([]RecordType, error) {

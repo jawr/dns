@@ -5,6 +5,7 @@ import (
 	"github.com/jawr/dns/database/cache"
 	"github.com/jawr/dns/database/connection"
 	"net/url"
+	"reflect"
 	"strings"
 )
 
@@ -14,6 +15,7 @@ type TLD struct {
 }
 
 var c = cache.New()
+var cacheGetID = cache.NewCacheInt32()
 
 func New(name string) (TLD, error) {
 	if t, ok := c.Check(name); ok {
@@ -80,12 +82,25 @@ func Search(params url.Values, idx, limit int) ([]TLD, error) {
 }
 
 func Get(query string, args ...interface{}) (TLD, error) {
+	var result TLD
+	if len(args) == 1 {
+		switch reflect.TypeOf(args[0]).Kind() {
+		case reflect.Int32:
+			if i, ok := cacheGetID.Check(query, args[0].(int32)); ok {
+				return i.(TLD), nil
+			}
+			defer func() {
+				cacheGetID.Add(result, query, args[0].(int32))
+			}()
+		}
+	}
 	conn, err := connection.Get()
 	if err != nil {
 		return TLD{}, err
 	}
 	row := conn.QueryRow(query, args...)
-	return parseRow(row)
+	result, err = parseRow(row)
+	return result, err
 }
 
 func GetList(query string, args ...interface{}) ([]TLD, error) {

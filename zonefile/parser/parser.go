@@ -135,15 +135,15 @@ func (p *Parser) Parse() error {
 	}
 
 	err = p.domainInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
+	if err != nil {
+		return err
+	}
 	err = p.Update("Create temp record table index.")
-	if err != nil {
-		return err
-	}
 	err = p.recordInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
-	err = p.Update("Merge temp domain with domain.")
 	if err != nil {
 		return err
 	}
+	err = p.Update("Merge temp domain with domain.")
 	err = p.domainInsert.Merge(
 		fmt.Sprintf(`
 			INSERT INTO domain__%d
@@ -184,6 +184,11 @@ func (p *Parser) Parse() error {
 			return err
 		}
 	}
+	err = p.recordInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
+	if err != nil {
+		return err
+	}
+	err = p.Update("Create hash index for domain on record.")
 	err = p.Update("Commit domain insert.")
 	if err != nil {
 		return err
