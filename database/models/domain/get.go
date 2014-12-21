@@ -17,6 +17,12 @@ const (
 	SELECT string = "SELECT * FROM domain "
 )
 
+func GetByJoinWhoisEmails() string {
+	return `
+		SELECT DISTINCT d.* FROM domain AS d JOIN whois w ON d.uuid = w.domain
+		WHERE w.emails ? $1`
+}
+
 func GetByNameAndTLD() string {
 	return SELECT + "WHERE name = $1 AND tld = $2"
 }
@@ -69,10 +75,12 @@ func parseRow(row connection.Row) (Domain, error) {
 	if err != nil {
 		return d, err
 	}
+	fmt.Println(tldId)
 	d.UUID = uuid.Parse(dUUID)
 	t, err := tld.Get(tld.GetByID(), tldId)
 	d.TLD = t
-	return d, nil
+	fmt.Println(t)
+	return d, err
 }
 
 func Get(query string, args ...interface{}) (Domain, error) {

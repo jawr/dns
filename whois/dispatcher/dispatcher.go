@@ -30,10 +30,8 @@ func Start(nworkers int) {
 		for {
 			select {
 			case work := <-Work:
-				go func() {
-					w := <-Workers
-					w <- work
-				}()
+				w := <-Workers
+				w <- work
 			}
 		}
 	}()

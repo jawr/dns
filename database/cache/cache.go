@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -19,8 +20,6 @@ func New() Cache {
 	}
 	return c
 }
-
-/* tolower or not tolower */
 
 func (c Cache) Check(uid string) (Item, bool) {
 	i, ok := c.cache[uid]
@@ -95,6 +94,7 @@ func (c *CacheString) Add(i Item, id1 string, id2 string) {
 	}
 	c.Lock()
 	defer c.Unlock()
+	fmt.Println(i)
 	if _, ok := c.cache[id1]; !ok {
 		c.cache[id1] = make(map[string]Item, 1)
 	}

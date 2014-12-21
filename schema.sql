@@ -131,6 +131,7 @@ CREATE OR REPLACE FUNCTION ensure_record_table(VARCHAR, INT)
 	DECLARE
 		rt_id INT;
 		create_sql TEXT;
+		create_idx TEXT;
 	BEGIN
 		SELECT insert_record_type($1) INTO rt_id;
 		create_sql := 'CREATE TABLE record__' || rt_id::text || '_' || $2::text || ' ( ' ||
@@ -138,6 +139,9 @@ CREATE OR REPLACE FUNCTION ensure_record_table(VARCHAR, INT)
 			'PRIMARY KEY (uuid)' ||
 	       ') INHERITS (record)';
 		EXECUTE create_sql;
+		create_idx := 'CREATE INDEX record__' || rt_id::text || '_' || $2::text || '_idx ' ||
+			'ON record__' || rt_id::text || '_' || $2::text || ' USING HASH (domain)';
+		EXECUTE create_idx;
 		RETURN rt_id;
 	EXCEPTION WHEN duplicate_table THEN
 		RETURN rt_id;

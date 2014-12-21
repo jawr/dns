@@ -31,6 +31,7 @@ Domain
 | GET | /domain/{name} | Object | Return an instance of a Domain by Name.TLD, i.e. 'google.biz'. |
 | GET | /domain/{name}/whois | Array | Return an array of Record objects filtered by Domain. Searchable. |
 | GET | /domain/{name}/records | Array | Return an array of Records objects filtered by Domain. Searchable. |
+| GET | /domain/query/emails | Array | Return an array of Domain objects filtered by related Whois document emails. |
 
 Record
 ------

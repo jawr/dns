@@ -134,7 +134,7 @@ func (p *Parser) Parse() error {
 		return err
 	}
 
-	err = p.domainInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
+	err = p.domainInsert.Index(fmt.Sprintf("CREATE INDEX _domain__%d_uuid_idx ON %%s (uuid)", p.TLD.ID))
 	if err != nil {
 		return err
 	}
@@ -184,11 +184,6 @@ func (p *Parser) Parse() error {
 			return err
 		}
 	}
-	err = p.recordInsert.Index("CREATE INDEX uuid_idx ON %s (uuid)")
-	if err != nil {
-		return err
-	}
-	err = p.Update("Create hash index for domain on record.")
 	err = p.Update("Commit domain insert.")
 	if err != nil {
 		return err

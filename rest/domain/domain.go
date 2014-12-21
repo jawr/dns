@@ -21,6 +21,8 @@ func Setup(r *mux.Router) {
 	d := &Domain{}
 	sr := r.PathPrefix("/domain").Subrouter()
 	sr.HandleFunc("/", paginator.Paginate(d.Search))
+
+	sr.HandleFunc("/query/email/{query}", d.Query)
 	sr.HandleFunc("/{uuid:"+UUID_REGEX+"}", d.GetUUID)
 	sr.HandleFunc("/{name}", d.GetName)
 
@@ -39,6 +41,13 @@ func Setup(r *mux.Router) {
 	sr.HandleFunc("/{name}/records",
 		injectDomainName(paginator.Paginate(rec.Search)),
 	)
+}
+
+func (d Domain) Query(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	query := vars["query"]
+	list, err := db.GetList(db.GetByJoinWhoisEmails(), query)
+	util.ToJSON(list, err, w)
 }
 
 func (d Domain) Search(w http.ResponseWriter, r *http.Request, query map[string][]string, idx, limit int) {
