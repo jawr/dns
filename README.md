@@ -8,3 +8,7 @@ Currently offers functionality to parse a TLD's zonefile and crawl over imported
 API
 ---
 Check the rest directory for a more in depth look at the rest API.
+
+TODO
+----
+* Possibly use boltdb to be our underlying cache (investigate buckets within buckets).
