@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 	db "github.com/jawr/dns/database/models/domain"
@@ -46,6 +47,7 @@ func Setup(r *mux.Router) {
 func (d Domain) Query(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	query := vars["query"]
+	fmt.Println(query)
 	list, err := db.GetList(db.GetByJoinWhoisEmails(), query)
 	util.ToJSON(list, err, w)
 }

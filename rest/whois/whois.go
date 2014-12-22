@@ -75,13 +75,13 @@ func (res Result) Post(w http.ResponseWriter, r *http.Request) {
 		}
 		c := dispatcher.AddDomain(d)
 		result := <-c
-		util.ToJSON(result, err, w)
+		util.ToJSON([]db.Result{result}, err, w)
 		return
 
 	} else if len(post.Query) > 0 {
 		c := dispatcher.AddQuery(post.Query)
 		result := <-c
-		util.ToJSON(result, err, w)
+		util.ToJSON([]db.Result{result}, err, w)
 		return
 	}
 	// do error

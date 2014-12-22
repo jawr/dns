@@ -12,3 +12,4 @@ Check the rest directory for a more in depth look at the rest API.
 TODO
 ----
 * Possibly use boltdb to be our underlying cache (investigate buckets within buckets).
+* REST API to return correct error codes and content-types

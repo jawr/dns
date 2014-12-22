@@ -12,7 +12,7 @@ import (
 
 func main() {
 	//parseZonefiles()
-	//go crawlWhois()
+	go crawlWhois()
 	startREST()
 	q := make(chan bool)
 	<-q

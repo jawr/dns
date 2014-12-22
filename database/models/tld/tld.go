@@ -87,15 +87,9 @@ func Get(query string, args ...interface{}) (TLD, error) {
 		switch reflect.TypeOf(args[0]).Kind() {
 		case reflect.Int32:
 			if i, ok := cacheGetID.Check(query, args[0].(int32)); ok {
-				fmt.Println(query)
-				fmt.Println(len(args))
-				fmt.Println(args[0].(int32))
-				fmt.Println(i.(TLD))
 				return i.(TLD), nil
 			}
 			defer func() {
-				fmt.Println("defer")
-				fmt.Println(result)
 				cacheGetID.Add(result, query, args[0].(int32))
 			}()
 		}
@@ -106,9 +100,6 @@ func Get(query string, args ...interface{}) (TLD, error) {
 	}
 	row := conn.QueryRow(query, args...)
 	result, err = parseRow(row)
-	fmt.Println("RESULT: ")
-	fmt.Println(result)
-	fmt.Println(err)
 	return result, err
 }
 
