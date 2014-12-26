@@ -31,17 +31,17 @@ type Data struct {
 }
 
 type Contact struct {
-	City         string `json:"city,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Email        string `json:"email,omitempty"`
-	Phone        string `json:"phone,omitempty"`
-	State        string `json:"state,omitempty"`
-	Handle       string `json:"handle,omitempty"`
-	Street       string `json:"street,omitempty"`
-	Country      string `json:"country,omitempty"`
-	Facsimile    string `json:"facsimilie,omitempty"`
-	Postalcode   string `json:"postalcode,omitempty"`
-	Organization string `json:"organization,omitempty"`
+	City         string `json:"city"`
+	Name         string `json:"name"`
+	Email        string `json:"email"`
+	Phone        string `json:"phone"`
+	State        string `json:"state"`
+	Handle       string `json:"handle"`
+	Street       string `json:"street"`
+	Country      string `json:"country"`
+	Facsimile    string `json:"facsimilie"`
+	Postalcode   string `json:"postalcode"`
+	Organization string `json:"organization"`
 }
 
 type Contacts struct {
