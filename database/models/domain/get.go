@@ -75,11 +75,9 @@ func parseRow(row connection.Row) (Domain, error) {
 	if err != nil {
 		return d, err
 	}
-	fmt.Println(tldId)
 	d.UUID = uuid.Parse(dUUID)
 	t, err := tld.Get(tld.GetByID(), tldId)
 	d.TLD = t
-	fmt.Println(t)
 	return d, err
 }
 

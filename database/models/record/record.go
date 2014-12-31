@@ -53,9 +53,13 @@ func (r Record) Insert() error {
 	if err != nil {
 		return err
 	}
-	_, err = conn.Exec(`INSERT INTO record
-		(uuid, domain, name, args, record_type, parser_date) VALUES
-		($1,   $2,     $3,   $4,   $5,          $6)`,
+	_, err = conn.Exec(
+		fmt.Sprintf(`INSERT INTO record__%d_%d
+				(uuid, domain, name, args, record_type, parser_date) VALUES
+				($1, $2, $3, $4, $5, $6)`,
+			r.RecordType.ID,
+			r.Domain.TLD.ID,
+		),
 		r.UUID.String(),
 		r.Domain.UUID.String(),
 		r.Name,
@@ -71,6 +75,5 @@ func (r *RecordArgs) Scan(src interface{}) error {
 }
 
 func (r *RecordArgs) Unmarshal(data []byte) error {
-	fmt.Println(string(data))
 	return nil
 }
