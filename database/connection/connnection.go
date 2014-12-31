@@ -20,7 +20,9 @@ var single *connection = nil
 func Get() (*sql.DB, error) {
 	if single == nil {
 		single = new(connection)
-		single.setup()
+		if err := single.setup(); err != nil {
+			return single, err
+		}
 	}
 	err := single.db.Ping()
 	return single.db, err
