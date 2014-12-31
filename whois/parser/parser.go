@@ -5,7 +5,6 @@ import (
 	"github.com/jawr/dns/database/models/whois"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/util"
-	"github.com/sbinet/go-python"
 	"os/exec"
 	"sync"
 )
@@ -16,13 +15,6 @@ type Parser struct {
 func New() Parser {
 	parser := Parser{}
 	return parser
-}
-
-func init() {
-	err := python.Initialize()
-	if err != nil {
-		panic(err.Error())
-	}
 }
 
 var lock sync.Mutex
