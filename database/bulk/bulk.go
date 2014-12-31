@@ -89,6 +89,11 @@ func (bi *Insert) Index(query string) error {
 	return err
 }
 
+func (bi *Insert) Exec(query string) error {
+	_, err := bi.tx.Exec(query)
+	return err
+}
+
 func (bi *Insert) Finish() error {
 	return bi.tx.Commit()
 }
