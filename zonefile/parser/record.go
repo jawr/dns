@@ -35,11 +35,6 @@ func (p Parser) buildRecordRow(r Record) (record.Record, error) {
 	}
 
 	d := domain.New(r.Name, r.TLD)
-	err = p.domainInsert.Add(&d)
-	if err != nil {
-		log.Error("Unable to bulk insert Domain: %s", err)
-		return record.Record{}, err
-	}
 
 	rr := record.New(r.Name, p.Date, d, args, rt)
 
@@ -51,7 +46,7 @@ func (p Parser) buildRecordRow(r Record) (record.Record, error) {
 
 // This function assumes the following:
 // <name> <ttl?> <type> <args>
-func (p Parser) getRecord(fields []string) (record.Record, error) {
+func (p Parser) GetRecord(fields []string) (record.Record, error) {
 	//defer util.Un(util.Trace())
 	r := Record{}
 	r.Name = fields[0]

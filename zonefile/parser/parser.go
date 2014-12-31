@@ -35,6 +35,10 @@ func New() Parser {
 	return parser
 }
 
+func (p *Parser) SetOrigin(s string) {
+	p.origin = s
+}
+
 func (p Parser) String() string {
 	return fmt.Sprintf("%s (%s)", p.TLD.Name, p.Date.Format("02-01-2006"))
 }
@@ -160,6 +164,14 @@ func (p *Parser) Parse() error {
 		return err
 	}
 	for rtName, rtID := range p.recordTypes {
+		err = p.recordInsert.Exec(fmt.Sprintf(
+			"DROP INDEX IF EXISTS record__%d_%d_idx",
+			rtID,
+			p.TLD.ID,
+		))
+		if err != nil {
+			return err
+		}
 		err = p.Update("Merge temp record with record (type: %s).", rtName)
 		if err != nil {
 			return err
@@ -167,19 +179,30 @@ func (p *Parser) Parse() error {
 		err = p.recordInsert.Merge(
 			fmt.Sprintf(`
 				INSERT INTO record__%d_%d
-				SELECT DISTINCT ON (uuid) * FROM %%s r2
+				SELECT DISTINCT ON (uuid) *, %d FROM %%s r2
 					WHERE NOT EXISTS (
 						SELECT NULL FROM record__%d_%d r WHERE
 							r.uuid = r2.uuid AND r.record_type = %d
 					) AND r2.record_type = %d`,
 				rtID,
 				p.TLD.ID,
+				p.ID,
 				rtID,
 				p.TLD.ID,
 				rtID,
 				rtID,
 			),
 		)
+		if err != nil {
+			return err
+		}
+		err = p.recordInsert.Exec(fmt.Sprintf(
+			"CREATE INDEX record__%d_%d_idx ON record__%d_%d USING HASH (domain)",
+			rtID,
+			p.TLD.ID,
+			rtID,
+			p.TLD.ID,
+		))
 		if err != nil {
 			return err
 		}
@@ -228,10 +251,15 @@ func (p *Parser) handleVariable(line string) {
 
 func (p *Parser) handleLine(line string) {
 	fields := strings.Fields(line)
-	rr, err := p.getRecord(fields)
+	rr, err := p.GetRecord(fields)
 	if err != nil {
 		log.Warn("handleLine:getRecord: %s", err)
 		log.Warn("handleLine:line: %s", line)
+		return
+	}
+	err = p.domainInsert.Add(&rr.Domain)
+	if err != nil {
+		log.Error("handleLine: Unable to bulk insert Domain: %s", err)
 		return
 	}
 	err = p.recordInsert.Add(&rr)
