@@ -5,28 +5,20 @@ import (
 	"github.com/jawr/dns/database/models/tld"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest"
+	"github.com/jawr/dns/watcher"
 	zonefile "github.com/jawr/dns/zonefile/parser"
 	"github.com/stathat/jconfig"
 	"net/http"
 )
 
 func main() {
-	/*
-		s, t, err := tld.DetectDomainAndTLD("ns1.google.co.uk")
-		if err != nil {
-			log.Error("%s", err)
-			return
-		}
-		d := domain.New(s, t)
-		p := parser.New()
-		_, err = p.Parse(d)
-		if err != nil {
-			panic(err)
-		}
+	//go crawl()
+	w, err := watcher.New()
+	if err != nil {
+		log.Error("%s", err)
 		return
-		//parseZonefiles()
-	*/
-	go crawl()
+	}
+	w.Start()
 	startREST()
 	q := make(chan bool)
 	<-q

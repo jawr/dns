@@ -66,6 +66,61 @@ CREATE TABLE parser (
 	UNIQUE (filename)
 );
 
+DROP TABLE IF EXISTS interval CASCADE;
+DROP SEQUENCE IF EXISTS interval_id CASCADE;
+CREATE TABLE interval (
+	id SERIAL,
+	value VARCHAR(150),
+	PRIMARY KEY (id),
+	UNIQUE (value)
+);
+
+DROP TABLE IF EXISTS watcher CASCADE;
+DROP SEQUENCE IF EXISTS watcher_id CASCADE;
+CREATE TABLE watcher (
+	id SERIAL,
+	domain UUID,
+	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	interval INT NOT NULL references interval(id),
+	logs jsonb,
+	PRIMARY KEY (id),
+	UNIQUE (domain)
+);
+
+CREATE OR REPLACE FUNCTION update_updated_column()
+	RETURNS TRIGGER
+	LANGUAGE plpgsql
+	AS $$
+	BEGIN
+		IF row(NEW.*) IS DISTINCT FROM row(OLD.*) THEN
+			NEW.updated = now();
+			RETURN NEW;
+		ELSE
+			RETURN OLD;
+		END IF;
+	END;
+	$$;
+
+
+CREATE TRIGGER update_watcher_updated BEFORE INSERT ON watcher
+	FOR EACH ROW EXECUTE PROCEDURE update_updated_column();
+
+CREATE OR REPLACE FUNCTION insert_interval(VARCHAR)
+	RETURNS INT
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+		interval_id INT;
+	BEGIN
+		INSERT INTO interval (value) VALUES ($1) RETURNING id INTO interval_id;
+		RETURN interval_id;
+	EXCEPTION WHEN UNIQUE_VIOLATION THEN
+		SELECT id INTO interval_id FROM interval WHERE value = $1;
+		RETURN interval_id;
+	END;
+	$$;
+
 -- Only use this to populate tld table as it creates a
 -- partitions the domain table
 CREATE OR REPLACE FUNCTION insert_tld(VARCHAR)
