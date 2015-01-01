@@ -1,10 +1,10 @@
-package parser
+package record_type
 
 import (
 	"errors"
 )
 
-func detectRecordType(s string) (string, error) {
+func DetectRecordType(s string) (string, error) {
 	switch s {
 	case "ns":
 		return s, nil

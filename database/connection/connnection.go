@@ -21,7 +21,7 @@ func Get() (*sql.DB, error) {
 	if single == nil {
 		single = new(connection)
 		if err := single.setup(); err != nil {
-			return single, err
+			return single.db, err
 		}
 	}
 	err := single.db.Ping()

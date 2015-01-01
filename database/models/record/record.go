@@ -3,10 +3,16 @@ package record
 import (
 	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/domain"
 	"github.com/jawr/dns/database/models/record_type"
+	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/log"
+	"github.com/jawr/dns/util"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,7 +31,53 @@ type Record struct {
 	Added      time.Time              `json:"added"`
 }
 
-func New(name string, date time.Time, d domain.Domain, args RecordArgs, rt record_type.RecordType) Record {
+func New(line, origin string, t tld.TLD, ttl uint, date time.Time) (Record, error) {
+	fields := strings.Fields(line)
+	r := Record{}
+
+	name := fields[0]
+	if !strings.HasSuffix(name, ".") {
+		name += "." + origin
+	}
+	r.Domain = domain.New(name, t)
+	r.Name = name
+	if name == domain.CleanDomain(r.Name, t) {
+		r.Name = "@"
+	}
+	r.Args.TTL = ttl
+
+	typeIdx := 1
+	if len(fields) > 3 {
+		fields = util.FilterIN(fields)
+	}
+	if len(fields) > 3 {
+		ttl, err := strconv.ParseUint(fields[1], 10, 0)
+		if err == nil {
+			typeIdx = 2
+			r.Args.TTL = uint(ttl)
+		} else {
+			log.Warn("Unable to parse RR: len(fields) == %d, fields: %s", len(fields), fields)
+		}
+	}
+	if len(fields) <= typeIdx {
+		return r, errors.New("Unable to set typeIdx in getRecord.")
+	}
+	rt, err := record_type.DetectRecordType(fields[typeIdx])
+	if err != nil {
+		return r, errors.New("Unable to detect Record Type.")
+	}
+	r.RecordType, err = record_type.New(rt, t)
+	r.Args.Args = fields[typeIdx+1:]
+	r.Date = date
+	id := uuid.NewSHA1(uuid.NameSpace_OID, []byte(
+		fmt.Sprintf("%v", r),
+	))
+	r.UUID = id
+	r.Added = time.Now()
+	return r, nil
+}
+
+func NewOld(name string, date time.Time, d domain.Domain, args RecordArgs, rt record_type.RecordType) Record {
 	name = d.CleanSubdomain(name)
 	r := Record{
 		Domain:     d,

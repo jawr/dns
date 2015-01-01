@@ -250,8 +250,7 @@ func (p *Parser) handleVariable(line string) {
 }
 
 func (p *Parser) handleLine(line string) {
-	fields := strings.Fields(line)
-	rr, err := p.GetRecord(fields)
+	rr, err := record.New(line, p.origin, p.TLD, p.ttl, p.Date)
 	if err != nil {
 		log.Warn("handleLine:getRecord: %s", err)
 		log.Warn("handleLine:line: %s", line)
