@@ -1,11 +1,16 @@
 package whois
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
+	"fmt"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/domain"
+	"regexp"
 	"time"
 )
+
+var uuidRawRE *regexp.Regexp = regexp.MustCompile(`([0-1]?\d|2[0-3]):([0-5]?\d):([0-5]?\d)`)
 
 type JSON []byte
 
@@ -17,6 +22,7 @@ type Result struct {
 	Contacts json.RawMessage `json:"contacts"`
 	Emails   []string        `json:"emails"`
 	Added    time.Time       `json:"added"`
+	UUID     uuid.UUID       `json:"uuid"`
 }
 
 type Data struct {
@@ -72,12 +78,16 @@ func New(d domain.Domain, data []byte) (Result, error) {
 		panic(err)
 	}
 	rawData, err := json.Marshal(&raw.Data)
+	uuidRaw := fmt.Sprintf("%s", raw.Raw)
+	uuidRaw = uuidRawRE.ReplaceAllString(uuidRaw, "")
+	id := uuid.NewSHA1(uuid.NameSpace_OID, []byte(uuidRaw))
 	return Result{
 		Domain:   d,
 		Data:     rawData,
 		Raw:      raw.Raw,
 		Contacts: rawContacts,
 		Emails:   emails,
+		UUID:     id,
 	}, err
 }
 
@@ -104,13 +114,14 @@ func (w *Result) Insert() error {
 	}
 
 	_, err = conn.Exec(`INSERT INTO whois 
-					(domain, data, raw_whois, contacts, emails) 
-				VALUES ($1, $2, $3, $4, $5)`,
+					(domain, data, raw_whois, contacts, emails, uuid) 
+				VALUES ($1, $2, $3, $4, $5, $6)`,
 		w.Domain.UUID.String(),
 		string(data),
 		string(raw),
 		string(contacts),
 		string(emails),
+		w.UUID.String(),
 	)
 	return err
 }

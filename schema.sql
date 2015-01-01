@@ -48,6 +48,7 @@ CREATE TABLE whois (
 	contacts jsonb,
 	emails jsonb,
 	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	uuid UUID,
 	PRIMARY KEY (id)
 );
 
@@ -106,6 +107,22 @@ CREATE OR REPLACE FUNCTION insert_domain()
 
 CREATE TRIGGER insert_domain_in_to_partition BEFORE INSERT ON domain
 	FOR EACH ROW EXECUTE PROCEDURE insert_domain();
+
+CREATE OR REPLACE FUNCTION insert_whois()
+	RETURNS TRIGGER
+	LANGUAGE plpgsql
+	AS $$
+	BEGIN
+		PERFORM 1 FROM whois WHERE uuid = NEW.uuid AND added > now() - interval '1 day';
+		IF NOT FOUND THEN
+			RETURN NEW;
+		END IF;
+		RETURN NULL;
+	END;
+	$$;
+
+CREATE TRIGGER insert_whois_check BEFORE INSERT ON whois
+	FOR EACH ROW EXECUTE PROCEDURE insert_whois();
 
 -- Only use this to populate record_type table as it creates a
 -- partitions the record table
