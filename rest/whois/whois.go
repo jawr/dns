@@ -28,6 +28,7 @@ func (res Result) Search(w http.ResponseWriter, r *http.Request, query map[strin
 	switch r.Method {
 	case "GET":
 		list, err := db.Search(query, idx, limit)
+		log.Info("whois: %+v", list)
 		util.ToJSON(list, err, w)
 	case "POST":
 		res.Post(w, r)

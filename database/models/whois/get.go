@@ -1,6 +1,7 @@
 package whois
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"fmt"
 	"github.com/jawr/dns/database/connection"
@@ -44,14 +45,17 @@ func Search(params url.Values, idx, limit int) ([]Result, error) {
 		query += "WHERE " + strings.Join(where, " AND ") + " "
 	}
 	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, idx)
+
+	fmt.Println(query)
+	fmt.Println(args)
 	return GetList(query, args...)
 }
 
 func parseRow(row connection.Row) (Result, error) {
 	w := Result{}
-	var uuid string
+	var duuid, wuuid string
 	var b []byte
-	err := row.Scan(&w.ID, &uuid, &w.Data, &w.Raw, &w.Contacts, &b, &w.Added)
+	err := row.Scan(&w.ID, &duuid, &w.Data, &w.Raw, &w.Contacts, &b, &w.Added, &wuuid)
 	if err != nil {
 		return w, err
 	}
@@ -59,10 +63,11 @@ func parseRow(row connection.Row) (Result, error) {
 	if err != nil {
 		return w, err
 	}
-	d, err := domain.Get(domain.GetByUUID(), uuid)
+	d, err := domain.Get(domain.GetByUUID(), duuid)
 	if err != nil {
 		return w, err
 	}
+	d.UUID = uuid.Parse(wuuid)
 	w.Domain = d
 	return w, nil
 }
