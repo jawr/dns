@@ -5,23 +5,15 @@ import (
 	"github.com/jawr/dns/database/models/tld"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest"
-	"github.com/jawr/dns/watcher"
 	zonefile "github.com/jawr/dns/zonefile/parser"
 	"github.com/stathat/jconfig"
 	"net/http"
 )
 
 func main() {
+	//go parseZonefiles()
 	//go crawl()
-	w, err := watcher.New()
-	if err != nil {
-		log.Error("%s", err)
-		return
-	}
-	w.Start()
 	startREST()
-	q := make(chan bool)
-	<-q
 }
 
 func crawl() {
@@ -71,7 +63,7 @@ func parseZonefiles() {
 	dir := config.GetString("zonefile_dir")
 	p := zonefile.New()
 	files := []string{
-		//"20141113-net.zone.gz",
+		"20141113-net.zone.gz",
 		"20140621-biz.zone.gz",
 		"20140622-biz.zone.gz",
 		"20141210-biz.zone.gz",
