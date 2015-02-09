@@ -12,6 +12,7 @@ func main() {
 		return
 	}
 	w.Start()
+	log.Info("Watcher started.")
 	q := make(chan bool)
 	<-q
 }

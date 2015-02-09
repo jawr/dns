@@ -6,6 +6,7 @@ import (
 	"github.com/jawr/dns/rest/record"
 	"github.com/jawr/dns/rest/record_type"
 	"github.com/jawr/dns/rest/tld"
+	"github.com/jawr/dns/rest/watcher"
 	"github.com/jawr/dns/rest/whois"
 	"net/http"
 )
@@ -18,5 +19,6 @@ func Setup() http.Handler {
 	record.Setup(sr)
 	record_type.Setup(sr)
 	whois.Setup(sr)
+	watcher.Setup(sr)
 	return r
 }
