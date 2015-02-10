@@ -85,7 +85,7 @@ func parseRow(row connection.Row) (Watcher, error) {
 	if err != nil {
 		return w, err
 	}
-	w.Domain, err = domain.Get(domain.GetByUUID(), uuid)
+	w.Domain, err = domain.GetByUUID(uuid).Get()
 	if err != nil {
 		return w, err
 	}

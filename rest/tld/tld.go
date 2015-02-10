@@ -6,6 +6,7 @@ import (
 	"github.com/jawr/dns/rest/paginator"
 	"github.com/jawr/dns/rest/util"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -19,7 +20,7 @@ func Setup(r *mux.Router) {
 	sr.HandleFunc("/{id}", t.GetID)
 }
 
-func (t TLD) Search(w http.ResponseWriter, r *http.Request, query map[string][]string, idx, limit int) {
+func (t TLD) Search(w http.ResponseWriter, r *http.Request, query url.Values, idx, limit int) {
 	list, err := db.Search(query, idx, limit)
 	util.ToJSON(list, err, w)
 }

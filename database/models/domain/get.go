@@ -33,11 +33,6 @@ func newResult(query string, args ...interface{}) Result {
 	}
 }
 
-func GetTest(arg string) Result {
-	query := "SELECT * FROM domain WHERE name LIKE $1 LIMIT 10"
-	return newResult(query, arg)
-}
-
 func GetByJoinWhoisEmails(email string) Result {
 	return newResult(
 		"SELECT DISTINCT d.* FROM domain AS d JOIN whois w ON d.uuid = w.domain WHERE w.emails ? $1",
@@ -45,24 +40,33 @@ func GetByJoinWhoisEmails(email string) Result {
 	)
 }
 
-func GetByNameAndTLD() string {
-	return SELECT + "WHERE name = $1 AND tld = $2"
+func GetByNameAndTLD(name string, tld int32) Result {
+	return newResult(
+		SELECT+"WHERE name = $1 AND tld = $2",
+		name, tld,
+	)
 }
 
-func GetByUUID() string {
-	return SELECT + "WHERE uuid = $1"
+func GetByUUID(uuid string) Result {
+	return newResult(
+		SELECT+"WHERE uuid = $1",
+		uuid,
+	)
 }
 
-func GetAll() string {
-	return SELECT
+func GetAll() Result {
+	return newResult(SELECT)
 }
 
-func GetAllLimitOffset() string {
-	return SELECT + "LIMIT $1 OFFSET $2"
+func GetAllLimitOffset(limit, offset int) Result {
+	return newResult(
+		SELECT+"LIMIT $1 OFFSET $2",
+		limit, offset,
+	)
 }
 
 func Search(params url.Values, offset, limit int) ([]Domain, error) {
-	query := GetAll()
+	query := SELECT
 	var where []string
 	var args []interface{}
 	i := 1
@@ -104,6 +108,7 @@ func parseRow(row connection.Row) (Domain, error) {
 }
 
 func Get(query string, args ...interface{}) (Domain, error) {
+	// TODO: better cache
 	var result Domain
 	if len(args) == 1 {
 		switch reflect.TypeOf(args[0]).Kind() {

@@ -7,10 +7,10 @@ import (
 	db "github.com/jawr/dns/database/models/domain"
 	"github.com/jawr/dns/database/models/tld"
 	"github.com/jawr/dns/rest/paginator"
-	"github.com/jawr/dns/rest/record"
 	"github.com/jawr/dns/rest/util"
 	"github.com/jawr/dns/rest/whois"
 	"net/http"
+	"net/url"
 )
 
 type Domain struct {
@@ -27,21 +27,13 @@ func Setup(r *mux.Router) {
 	sr.HandleFunc("/{uuid:"+UUID_REGEX+"}", d.GetUUID)
 	sr.HandleFunc("/{name}", d.GetName)
 
-	w := whois.Result{}
 	sr.HandleFunc("/{duuid:"+UUID_REGEX+"}/whois",
-		injectDomainUUID(paginator.Paginate(w.Search)),
+		injectDomainUUID(paginator.Paginate(whois.Search)),
 	)
 	sr.HandleFunc("/{name}/whois",
-		injectDomainName(paginator.Paginate(w.Search)),
+		injectDomainName(paginator.Paginate(whois.Search)),
 	)
 
-	rec := record.Record{}
-	sr.HandleFunc("/{duuid:"+UUID_REGEX+"}/records",
-		injectDomainUUID(paginator.Paginate(rec.Search)),
-	)
-	sr.HandleFunc("/{name}/records",
-		injectDomainName(paginator.Paginate(rec.Search)),
-	)
 }
 
 func (d Domain) Query(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +44,7 @@ func (d Domain) Query(w http.ResponseWriter, r *http.Request) {
 	util.ToJSON(list, err, w)
 }
 
-func (d Domain) Search(w http.ResponseWriter, r *http.Request, query map[string][]string, idx, limit int) {
+func (d Domain) Search(w http.ResponseWriter, r *http.Request, query url.Values, idx, limit int) {
 	list, err := db.Search(query, idx, limit)
 	util.ToJSON(list, err, w)
 }
@@ -61,7 +53,7 @@ func (d Domain) GetUUID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uuid := vars["uuid"]
 
-	i, err := db.Get(db.GetByUUID(), uuid)
+	i, err := db.GetByUUID(uuid).Get()
 	util.ToJSON(i, err, w)
 }
 
@@ -72,7 +64,7 @@ func (d Domain) GetName(w http.ResponseWriter, r *http.Request) {
 		util.ToJSON(db.Domain{}, err, w)
 		return
 	}
-	i, err := db.Get(db.GetByNameAndTLD(), s, t.ID)
+	i, err := db.GetByNameAndTLD(s, t.ID).Get()
 	util.ToJSON(i, err, w)
 }
 
@@ -95,7 +87,7 @@ func injectDomainName(fn func(http.ResponseWriter, *http.Request)) http.HandlerF
 			util.ToJSON(db.Domain{}, err, w)
 			return
 		}
-		i, err := db.Get(db.GetByNameAndTLD(), s, t.ID)
+		i, err := db.GetByNameAndTLD(s, t.ID).Get()
 		if err != nil {
 			util.ToJSON(i, err, w)
 			return

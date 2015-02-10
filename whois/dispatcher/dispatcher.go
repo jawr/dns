@@ -11,7 +11,7 @@ import (
 var Workers chan chan worker.Request
 var Work chan worker.Request
 
-type Result chan whois.Result
+type Record chan whois.Record
 
 func init() {
 	Start(2)
@@ -37,25 +37,26 @@ func Start(nworkers int) {
 	}()
 }
 
-func AddDomain(d domain.Domain) Result {
-	res := make(chan whois.Result)
+func AddDomain(d domain.Domain) Record {
+	res := make(chan whois.Record)
 	wr := worker.Request{
 		Domain: d,
-		Result: res,
+		Record: res,
 	}
+	log.Info("Add to Work")
 	Work <- wr
 	return res
 }
 
-func AddQuery(q string) Result {
-	res := make(chan whois.Result)
+func AddQuery(q string) Record {
+	res := make(chan whois.Record)
 	// could offload this in to a seperate anon function to avoid bottleneck
 	s, t, err := tld.DetectDomainAndTLD(q)
 	if err != nil {
 		log.Error("Whois dipatcher: Unable to detect TLD and domain: %s (%s)", err, q)
 		return res
 	}
-	d, err := domain.Get(domain.GetByNameAndTLD(), s, t.ID)
+	d, err := domain.GetByNameAndTLD(s, t.ID).Get()
 	if err != nil {
 		log.Error("Whois dispatcher: unable to get domain: %s (%s)", err, s)
 		d = domain.New(s, t)
@@ -67,7 +68,7 @@ func AddQuery(q string) Result {
 	}
 	wr := worker.Request{
 		Domain: d,
-		Result: res,
+		Record: res,
 	}
 	Work <- wr
 	return res

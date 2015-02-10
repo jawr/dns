@@ -11,7 +11,7 @@ type QueryPost struct {
 	Email string `json:"email"`
 }
 
-func (res Result) PostQuery(w http.ResponseWriter, r *http.Request) {
+func PostQuery(w http.ResponseWriter, r *http.Request) {
 	query := QueryPost{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&query)
@@ -20,7 +20,7 @@ func (res Result) PostQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	list, err := db.GetList(db.GetByHasEmail(), query.Email)
+	list, err := db.GetByHasEmail(query.Email).GetAll()
 
 	util.ToJSON(list, err, w)
 }

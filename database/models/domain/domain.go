@@ -34,7 +34,7 @@ func (d Domain) String() string {
 	return d.Name + "." + d.TLD.Name
 }
 
-func (d *Domain) Insert() error {
+func (d Domain) Insert() error {
 	conn, err := connection.Get()
 	if err != nil {
 		return err

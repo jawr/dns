@@ -19,12 +19,12 @@ func New() Parser {
 
 var lock sync.Mutex
 
-func (p *Parser) Exec(d domain.Domain) (whois.Result, error) {
+func (p *Parser) Exec(d domain.Domain) (whois.Record, error) {
 	defer util.Un(util.Trace())
 	log.Info("Parse Whois " + d.String())
 	out, err := exec.Command("pwhois", "-j", d.String()).Output()
 	if err != nil {
-		return whois.Result{}, err
+		return whois.Record{}, err
 	}
 	w, err := whois.New(d, out)
 	if err != nil {

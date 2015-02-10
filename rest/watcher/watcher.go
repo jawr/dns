@@ -8,6 +8,7 @@ import (
 	"github.com/jawr/dns/rest/paginator"
 	"github.com/jawr/dns/rest/util"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -21,10 +22,10 @@ func Setup(r *mux.Router) {
 	sr.HandleFunc("/{id}", res.GetID)
 }
 
-func (res Result) Root(w http.ResponseWriter, r *http.Request, query map[string][]string, idx, limit int) {
+func (res Result) Root(w http.ResponseWriter, r *http.Request, query url.Values, idx, limit int) {
 	switch r.Method {
 	case "GET":
-		list, err := db.Search(query, idx, limit)
+		list, err := db.Search(query, limit, idx)
 		log.Info("watcher: %+v", list)
 		util.ToJSON(list, err, w)
 	case "POST":

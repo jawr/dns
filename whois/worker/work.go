@@ -8,7 +8,7 @@ import (
 
 type Request struct {
 	Domain domain.Domain
-	Result chan whois.Result
+	Record chan whois.Record
 }
 
 func (r Request) Do(w Worker) {
@@ -18,7 +18,7 @@ func (r Request) Do(w Worker) {
 		return
 	}
 	select {
-	case r.Result <- res:
+	case r.Record <- res:
 		break
 	default:
 		break

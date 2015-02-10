@@ -31,6 +31,7 @@ func (w Worker) Start() {
 
 			select {
 			case work := <-w.Work:
+				log.Info("Got work")
 				work.Do(w)
 
 			case <-w.QuitChan:

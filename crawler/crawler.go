@@ -32,7 +32,7 @@ func (c Crawler) Start() {
 				log.Info("Quit crawler.")
 				return
 			default:
-				domains, err := domain.GetList(domain.GetAllLimitOffset(), WINDOW, c.offset)
+				domains, err := domain.GetAllLimitOffset(WINDOW, c.offset).GetAll()
 				if err != nil {
 					log.Error("Crawler. Unable to get domains: %s", err)
 					// shutdown

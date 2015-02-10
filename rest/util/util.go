@@ -19,6 +19,10 @@ func parseError(err error, w http.ResponseWriter) {
 	w.Write([]byte(`{"error": "` + err.Error() + `"}`))
 }
 
+func Error(err error, w http.ResponseWriter) {
+	parseError(err, w)
+}
+
 func ToJSON(v interface{}, err error, w http.ResponseWriter) {
 	if err != nil {
 		parseError(err, w)

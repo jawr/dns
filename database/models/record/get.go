@@ -69,7 +69,7 @@ func parseRow(row connection.Row) (Record, error) {
 		return r, err
 	}
 	r.UUID = uuid.Parse(rUUID)
-	d, err := domain.Get(domain.GetByUUID(), dUUID)
+	d, err := domain.GetByUUID(dUUID).Get()
 	if err != nil {
 		return r, err
 	}

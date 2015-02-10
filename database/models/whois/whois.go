@@ -14,7 +14,7 @@ var uuidRawRE *regexp.Regexp = regexp.MustCompile(`([0-1]?\d|2[0-3]):([0-5]?\d):
 
 type JSON []byte
 
-type Result struct {
+type Record struct {
 	ID       int32           `json:"id"`
 	Domain   domain.Domain   `json:"domain"`
 	Data     json.RawMessage `json:"data"`
@@ -25,46 +25,7 @@ type Result struct {
 	UUID     uuid.UUID       `json:"uuid"`
 }
 
-type Data struct {
-	ID             []string `json:"id,omitempty"`
-	Status         []string `json:"status,omitempty"`
-	Registrar      []string `json:"registrar,omitempty"`
-	Nameservers    []string `json:"nameservers,omitempty"`
-	UpdatedDate    []string `json:"updated_date,omitempty"`
-	WhoisServer    []string `json:"whois_server,omitempty"`
-	CreationDate   []string `json:"creation_date,omitempty"`
-	ExpirationDate []string `json:"expiration_date,omitempty"`
-}
-
-type Contact struct {
-	City         string `json:"city,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Email        string `json:"email,omitempty"`
-	Phone        string `json:"phone,omitempty"`
-	State        string `json:"state,omitempty"`
-	Handle       string `json:"handle,omitempty"`
-	Street       string `json:"street,omitempty"`
-	Country      string `json:"country,omitempty"`
-	Facsimile    string `json:"facsimilie,omitempty"`
-	Postalcode   string `json:"postalcode,omitempty"`
-	Organization string `json:"organization,omitempty"`
-}
-
-type Contacts struct {
-	Tech       *Contact `json:"tech,omitempty"`
-	Admin      *Contact `json:"admin,omitempty"`
-	Billing    *Contact `json:"billing,omitempty"`
-	Registrant *Contact `json:"registrant,omitempty"`
-}
-
-type Raw struct {
-	Data
-	Raw      json.RawMessage `json:"raw"`
-	Emails   []string        `json:"emails"`
-	Contacts Contacts        `json:"contacts"`
-}
-
-func New(d domain.Domain, data []byte) (Result, error) {
+func New(d domain.Domain, data []byte) (Record, error) {
 	raw := Raw{}
 	err := json.Unmarshal(data, &raw)
 	if err != nil {
@@ -81,7 +42,7 @@ func New(d domain.Domain, data []byte) (Result, error) {
 	uuidRaw := fmt.Sprintf("%s", raw.Raw)
 	uuidRaw = uuidRawRE.ReplaceAllString(uuidRaw, "")
 	id := uuid.NewSHA1(uuid.NameSpace_OID, []byte(uuidRaw))
-	return Result{
+	return Record{
 		Domain:   d,
 		Data:     rawData,
 		Raw:      raw.Raw,
@@ -91,24 +52,24 @@ func New(d domain.Domain, data []byte) (Result, error) {
 	}, err
 }
 
-func (w *Result) Insert() error {
+func (r Record) Insert() error {
 	conn, err := connection.Get()
 	if err != nil {
 		return err
 	}
-	emails, err := json.Marshal(w.Emails)
+	emails, err := json.Marshal(r.Emails)
 	if err != nil {
 		return err
 	}
-	data, err := w.Data.MarshalJSON()
+	data, err := r.Data.MarshalJSON()
 	if err != nil {
 		return err
 	}
-	raw, err := w.Raw.MarshalJSON()
+	raw, err := r.Raw.MarshalJSON()
 	if err != nil {
 		return err
 	}
-	contacts, err := w.Contacts.MarshalJSON()
+	contacts, err := r.Contacts.MarshalJSON()
 	if err != nil {
 		return err
 	}
@@ -116,32 +77,12 @@ func (w *Result) Insert() error {
 	_, err = conn.Exec(`INSERT INTO whois 
 					(domain, data, raw_whois, contacts, emails, uuid) 
 				VALUES ($1, $2, $3, $4, $5, $6)`,
-		w.Domain.UUID.String(),
+		r.Domain.UUID.String(),
 		string(data),
 		string(raw),
 		string(contacts),
 		string(emails),
-		w.UUID.String(),
+		r.UUID.String(),
 	)
 	return err
-}
-
-func parseEmails(raw Raw) []string {
-	emails := make(map[string]bool)
-	for _, v := range raw.Emails {
-		emails[v] = true
-	}
-	emails[raw.Contacts.Tech.Email] = true
-	emails[raw.Contacts.Admin.Email] = true
-	emails[raw.Contacts.Billing.Email] = true
-	emails[raw.Contacts.Registrant.Email] = true
-
-	var list = make([]string, 0)
-	for k, _ := range emails {
-		if k != "" {
-			list = append(list, k)
-		}
-	}
-
-	return list
 }
