@@ -48,7 +48,7 @@ func (d Domain) Query(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	query := vars["query"]
 	fmt.Println(query)
-	list, err := db.GetList(db.GetByJoinWhoisEmails(), query)
+	list, err := db.GetByJoinWhoisEmails(query).GetAll()
 	util.ToJSON(list, err, w)
 }
 

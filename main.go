@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/jawr/dns/crawler"
+	"github.com/jawr/dns/database/models/domain"
 	"github.com/jawr/dns/database/models/tld"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest"
@@ -13,6 +14,11 @@ import (
 func main() {
 	//go parseZonefiles()
 	//go crawl()
+	d, err := domain.GetTest("go%").GetAll()
+	if err != nil {
+		panic(err)
+	}
+	log.Info("domain: %+v", d)
 	startREST()
 }
 

@@ -17,10 +17,32 @@ const (
 	SELECT string = "SELECT * FROM domain "
 )
 
-func GetByJoinWhoisEmails() string {
-	return `
-		SELECT DISTINCT d.* FROM domain AS d JOIN whois w ON d.uuid = w.domain
-		WHERE w.emails ? $1`
+type Result struct {
+	Get    func() (Domain, error)
+	GetAll func() ([]Domain, error)
+}
+
+func newResult(query string, args ...interface{}) Result {
+	return Result{
+		Get: func() (Domain, error) {
+			return Get(query, args...)
+		},
+		GetAll: func() ([]Domain, error) {
+			return GetList(query, args...)
+		},
+	}
+}
+
+func GetTest(arg string) Result {
+	query := "SELECT * FROM domain WHERE name LIKE $1 LIMIT 10"
+	return newResult(query, arg)
+}
+
+func GetByJoinWhoisEmails(email string) Result {
+	return newResult(
+		"SELECT DISTINCT d.* FROM domain AS d JOIN whois w ON d.uuid = w.domain WHERE w.emails ? $1",
+		email,
+	)
 }
 
 func GetByNameAndTLD() string {
