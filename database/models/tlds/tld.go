@@ -11,6 +11,9 @@ type TLD struct {
 }
 
 func New(name string) (TLD, error) {
+	if tld, ok := byName[name]; ok {
+		return tld, nil
+	}
 	conn, err := connection.Get()
 	if err != nil {
 		return TLD{}, err

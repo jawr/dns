@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/jawr/dns/database/models/domain"
+	"github.com/jawr/dns/database/models/domains"
 	"github.com/jawr/dns/database/models/whois"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/util"
@@ -19,7 +19,7 @@ func New() Parser {
 
 var lock sync.Mutex
 
-func (p *Parser) Exec(d domain.Domain) (whois.Record, error) {
+func (p *Parser) Exec(d domains.Domain) (whois.Record, error) {
 	defer util.Un(util.Trace())
 	log.Info("Parse Whois " + d.String())
 	out, err := exec.Command("pwhois", "-j", d.String()).Output()

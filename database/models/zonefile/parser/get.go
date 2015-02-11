@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/database/models/tlds"
 	"net/url"
 	"strings"
 )
@@ -27,7 +27,7 @@ func parseRow(row connection.Row) (Parser, error) {
 	if err != nil {
 		return p, err
 	}
-	t, err := tld.Get(tld.GetByID(), tldID)
+	t, err := tlds.GetByID(tldID).One()
 	p.TLD = t
 	return p, err
 }

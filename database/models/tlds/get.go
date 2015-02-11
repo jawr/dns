@@ -69,8 +69,7 @@ func Get(query string, args ...interface{}) (TLD, error) {
 		return TLD{}, err
 	}
 	row := conn.QueryRow(query, args...)
-	result, err := parseRow(row)
-	return result, err
+	return parseRow(row)
 }
 
 func GetList(query string, args ...interface{}) ([]TLD, error) {

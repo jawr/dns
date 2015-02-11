@@ -1,14 +1,14 @@
 package worker
 
 import (
-	"github.com/jawr/dns/database/models/domain"
-	"github.com/jawr/dns/database/models/record"
+	"github.com/jawr/dns/database/models/domains"
+	"github.com/jawr/dns/database/models/records"
 	"github.com/jawr/dns/log"
 )
 
 type Request struct {
-	Domain domain.Domain
-	Result chan []record.Record
+	Domain domains.Domain
+	Result chan []records.Record
 }
 
 func (r Request) Do(w Worker) {

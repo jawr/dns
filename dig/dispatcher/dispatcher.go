@@ -1,9 +1,9 @@
 package dispatcher
 
 import (
-	"github.com/jawr/dns/database/models/domain"
-	"github.com/jawr/dns/database/models/record"
-	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/database/models/domains"
+	"github.com/jawr/dns/database/models/records"
+	"github.com/jawr/dns/database/models/tlds"
 	"github.com/jawr/dns/dig/worker"
 	"github.com/jawr/dns/log"
 )
@@ -11,7 +11,7 @@ import (
 var Workers chan chan worker.Request
 var Work chan worker.Request
 
-type Result chan []record.Record
+type Result chan []records.Record
 
 func init() {
 	Start(2)
@@ -37,7 +37,7 @@ func Start(nworkers int) {
 	}()
 }
 
-func AddDomain(d domain.Domain) Result {
+func AddDomain(d domains.Domain) Result {
 	res := make(Result)
 	wr := worker.Request{
 		Domain: d,
@@ -50,15 +50,15 @@ func AddDomain(d domain.Domain) Result {
 func AddQuery(q string) Result {
 	res := make(Result)
 	// could offload this in to a seperate anon function to avoid bottleneck
-	s, t, err := tld.DetectDomainAndTLD(q)
+	s, t, err := tlds.DetectDomainAndTLD(q)
 	if err != nil {
 		log.Error("Dig dipatcher: Unable to detect TLD and domain: %s (%s)", err, q)
 		return res
 	}
-	d, err := domain.GetByNameAndTLD(s, t.ID).Get()
+	d, err := domains.GetByNameAndTLD(s, t.ID).One()
 	if err != nil {
 		log.Error("Dig dispatcher: unable to get domain: %s (%s)", err, s)
-		d = domain.New(s, t)
+		d = domains.New(s, t)
 		err = d.Insert()
 		if err != nil {
 			log.Error("Dig dispatcher: unable to insert domain: %s (%s)", err, d.String())

@@ -1,13 +1,13 @@
 package worker
 
 import (
-	"github.com/jawr/dns/database/models/domain"
+	"github.com/jawr/dns/database/models/domains"
 	"github.com/jawr/dns/database/models/whois"
 	"github.com/jawr/dns/log"
 )
 
 type Request struct {
-	Domain domain.Domain
+	Domain domains.Domain
 	Record chan whois.Record
 }
 

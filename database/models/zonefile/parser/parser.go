@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/database/models/tlds"
 	"regexp"
 	"strings"
 	"time"
@@ -22,7 +22,7 @@ type Parser struct {
 	Started  time.Time  `json:"started"`
 	Finished *time.Time `json:"finished"`
 	Date     time.Time  `json:"date"`
-	TLD      tld.TLD    `json:"tld"`
+	TLD      tlds.TLD   `json:"tld"`
 	Logs     []Log      `json:"logs"`
 }
 
@@ -38,7 +38,7 @@ func New(filename string) (Parser, error) {
 	if len(args) < 4 {
 		return p, errors.New("No TLD or date detected in zone filename: " + filename)
 	}
-	t, err := tld.Get(tld.GetByName(), args[2])
+	t, err := tlds.GetByName(args[2]).One()
 	if err != nil {
 		return p, err
 	}

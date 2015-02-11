@@ -1,4 +1,4 @@
-package domain
+package domains
 
 import (
 	"github.com/jawr/dns/database/bulk"
@@ -15,7 +15,7 @@ func NewBulkInsert() (bulk.Insert, error) {
 	return bi, err
 }
 
-func (d *Domain) BulkInsert(stmt bulk.Stmt) error {
+func (d Domain) BulkInsert(stmt bulk.Stmt) error {
 	_, err := stmt.Exec(d.UUID.String(), d.Name, d.TLD.ID)
 	return err
 }

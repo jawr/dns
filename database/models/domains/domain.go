@@ -1,20 +1,20 @@
-package domain
+package domains
 
 import (
 	"code.google.com/p/go-uuid/uuid"
 	"fmt"
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/database/models/tlds"
 	"strings"
 )
 
 type Domain struct {
 	UUID uuid.UUID `json:"uuid"`
 	Name string    `json:"name"`
-	TLD  tld.TLD   `json:"tld"`
+	TLD  tlds.TLD  `json:"tlds"`
 }
 
-func New(name string, t tld.TLD) Domain {
+func New(name string, t tlds.TLD) Domain {
 	name = CleanDomain(name, t)
 	args := strings.Split(name, ".")
 	name = args[len(args)-1]
@@ -39,7 +39,7 @@ func (d Domain) Insert() error {
 	if err != nil {
 		return err
 	}
-	_, err = conn.Exec("INSERT INTO domain (uuid, name, tld) VALUES ($1, $2, $3)",
+	_, err = conn.Exec("INSERT INTO domain (uuid, name, tlds) VALUES ($1, $2, $3)",
 		d.UUID.String(),
 		d.Name,
 		d.TLD.ID,
@@ -47,7 +47,7 @@ func (d Domain) Insert() error {
 	return err
 }
 
-func CleanDomain(s string, t tld.TLD) string {
+func CleanDomain(s string, t tlds.TLD) string {
 	s = strings.TrimSuffix(s, ".")
 	s = strings.TrimSuffix(s, "."+t.Name)
 	args := strings.Split(s, ".")

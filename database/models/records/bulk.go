@@ -1,4 +1,4 @@
-package record
+package records
 
 import (
 	"encoding/json"
@@ -24,6 +24,6 @@ func (r *Record) BulkInsert(stmt bulk.Stmt) error {
 	if err != nil {
 		return err
 	}
-	_, err = stmt.Exec(r.UUID.String(), r.Domain.UUID.String(), r.Name, string(args), r.RecordType.ID, r.Date)
+	_, err = stmt.Exec(r.UUID.String(), r.Domain.UUID.String(), r.Name, string(args), r.Type.ID, r.Date)
 	return err
 }

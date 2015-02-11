@@ -1,7 +1,7 @@
 package crawler
 
 import (
-	"github.com/jawr/dns/database/models/domain"
+	"github.com/jawr/dns/database/models/domains"
 	digDispatcher "github.com/jawr/dns/dig/dispatcher"
 	"github.com/jawr/dns/log"
 	whoisDispatcher "github.com/jawr/dns/whois/dispatcher"
@@ -32,14 +32,14 @@ func (c Crawler) Start() {
 				log.Info("Quit crawler.")
 				return
 			default:
-				domains, err := domain.GetAllLimitOffset(WINDOW, c.offset).GetAll()
+				domainList, err := domains.GetAllLimitOffset(WINDOW, c.offset).List()
 				if err != nil {
 					log.Error("Crawler. Unable to get domains: %s", err)
 					// shutdown
 					c.Stop()
 					return
 				}
-				for _, d := range domains {
+				for _, d := range domainList {
 					whoisDispatcher.AddDomain(d)
 					digDispatcher.AddDomain(d)
 					time.Sleep(c.delay)

@@ -1,8 +1,8 @@
 package dispatcher
 
 import (
-	"github.com/jawr/dns/database/models/domain"
-	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/database/models/domains"
+	"github.com/jawr/dns/database/models/tlds"
 	"github.com/jawr/dns/database/models/whois"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/whois/worker"
@@ -37,7 +37,7 @@ func Start(nworkers int) {
 	}()
 }
 
-func AddDomain(d domain.Domain) Record {
+func AddDomain(d domains.Domain) Record {
 	res := make(chan whois.Record)
 	wr := worker.Request{
 		Domain: d,
@@ -51,15 +51,15 @@ func AddDomain(d domain.Domain) Record {
 func AddQuery(q string) Record {
 	res := make(chan whois.Record)
 	// could offload this in to a seperate anon function to avoid bottleneck
-	s, t, err := tld.DetectDomainAndTLD(q)
+	s, t, err := tlds.DetectDomainAndTLD(q)
 	if err != nil {
 		log.Error("Whois dipatcher: Unable to detect TLD and domain: %s (%s)", err, q)
 		return res
 	}
-	d, err := domain.GetByNameAndTLD(s, t.ID).Get()
+	d, err := domains.GetByNameAndTLD(s, t.ID).One()
 	if err != nil {
 		log.Error("Whois dispatcher: unable to get domain: %s (%s)", err, s)
-		d = domain.New(s, t)
+		d = domains.New(s, t)
 		err = d.Insert()
 		if err != nil {
 			log.Error("Whois dispatcher: unable to insert domain: %s (%s)", err, d.String())

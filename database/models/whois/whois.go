@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/database/models/domain"
+	"github.com/jawr/dns/database/models/domains"
 	"regexp"
 	"time"
 )
@@ -16,7 +16,7 @@ type JSON []byte
 
 type Record struct {
 	ID       int32           `json:"id"`
-	Domain   domain.Domain   `json:"domain"`
+	Domain   domains.Domain  `json:"domain"`
 	Data     json.RawMessage `json:"data"`
 	Raw      json.RawMessage `json:"raw"`
 	Contacts json.RawMessage `json:"contacts"`
@@ -25,7 +25,7 @@ type Record struct {
 	UUID     uuid.UUID       `json:"uuid"`
 }
 
-func New(d domain.Domain, data []byte) (Record, error) {
+func New(d domains.Domain, data []byte) (Record, error) {
 	raw := Raw{}
 	err := json.Unmarshal(data, &raw)
 	if err != nil {

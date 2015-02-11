@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/jawr/dns/database/bulk"
-	"github.com/jawr/dns/database/models/domain"
-	"github.com/jawr/dns/database/models/record"
+	"github.com/jawr/dns/database/models/domains"
+	"github.com/jawr/dns/database/models/records"
 	db "github.com/jawr/dns/database/models/zonefile/parser"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/util"
@@ -59,12 +59,12 @@ func (p *Parser) Close() {
 func (p *Parser) Parse() error {
 	defer p.Close()
 	defer util.Un(util.Trace())
-	ri, err := record.NewBulkInsert()
+	ri, err := records.NewBulkInsert()
 	if err != nil {
 		return err
 	}
 	p.recordInsert = &ri
-	bi, err := domain.NewBulkInsert()
+	bi, err := domains.NewBulkInsert()
 	if err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ func (p *Parser) handleVariable(line string) {
 }
 
 func (p *Parser) handleLine(line string) {
-	rr, err := record.New(line, p.origin, p.TLD, p.ttl, p.Date)
+	rr, err := records.New(line, p.origin, p.TLD, p.ttl, p.Date)
 	if err != nil {
 		log.Warn("handleLine:getRecord: %s", err)
 		log.Warn("handleLine:line: %s", line)
@@ -266,5 +266,5 @@ func (p *Parser) handleLine(line string) {
 		log.Error("handleLine:recordInsert.Add: %s", err)
 		return
 	}
-	p.recordTypes[rr.RecordType.Name] = rr.RecordType.ID
+	p.recordTypes[rr.Type.Name] = rr.Type.ID
 }

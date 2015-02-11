@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/jawr/dns/crawler"
-	"github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/database/models/tlds"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest"
 	zonefile "github.com/jawr/dns/zonefile/parser"
@@ -22,28 +22,28 @@ func crawl() {
 }
 
 func testDetectDomainAndTLD() {
-	s, t, err := tld.DetectDomainAndTLD("ns1.google.co.uk")
+	s, t, err := tlds.DetectDomainAndTLD("ns1.google.co.uk")
 	if err != nil {
 		log.Error("%s", err)
 		return
 	}
 	log.Info("%+v", t)
 	log.Info("%+v", s)
-	s, t, err = tld.DetectDomainAndTLD("ns1.google.co.ng")
+	s, t, err = tlds.DetectDomainAndTLD("ns1.google.co.ng")
 	if err != nil {
 		log.Error("%s", err)
 		return
 	}
 	log.Info("%+v", t)
 	log.Info("%+v", s)
-	s, t, err = tld.DetectDomainAndTLD("ns1.google.co.com")
+	s, t, err = tlds.DetectDomainAndTLD("ns1.google.co.com")
 	if err != nil {
 		log.Error("%s", err)
 		return
 	}
 	log.Info("%+v", t)
 	log.Info("%+v", s)
-	s, t, err = tld.DetectDomainAndTLD("ns1.google.foo")
+	s, t, err = tlds.DetectDomainAndTLD("ns1.google.foo")
 	if err != nil {
 		log.Error("%s", err)
 		return

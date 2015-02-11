@@ -4,7 +4,7 @@ import (
 	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"github.com/jawr/dns/database/connection"
-	"github.com/jawr/dns/database/models/domain"
+	"github.com/jawr/dns/database/models/domains"
 )
 
 const (
@@ -12,16 +12,16 @@ const (
 )
 
 type Result struct {
-	Get    func() (Record, error)
-	GetAll func() ([]Record, error)
+	One  func() (Record, error)
+	List func() ([]Record, error)
 }
 
 func newResult(query string, args ...interface{}) Result {
 	return Result{
-		Get: func() (Record, error) {
+		func() (Record, error) {
 			return Get(query, args...)
 		},
-		GetAll: func() ([]Record, error) {
+		func() ([]Record, error) {
 			return GetList(query, args...)
 		},
 	}
@@ -51,7 +51,7 @@ func parseRow(row connection.Row) (Record, error) {
 	if err != nil {
 		return w, err
 	}
-	w.Domain, err = domain.GetByUUID(duuid).Get()
+	w.Domain, err = domains.GetByUUID(duuid).One()
 	if err != nil {
 		return w, err
 	}

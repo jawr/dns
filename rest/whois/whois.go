@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	domains "github.com/jawr/dns/database/models/domain"
-	tlds "github.com/jawr/dns/database/models/tld"
+	"github.com/jawr/dns/database/models/domains"
+	"github.com/jawr/dns/database/models/tlds"
 	db "github.com/jawr/dns/database/models/whois"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest/paginator"
@@ -61,7 +61,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 				util.Error(err, w)
 				return
 			}
-			domain, err = domains.GetByNameAndTLD(name, tld.ID).Get()
+			domain, err = domains.GetByNameAndTLD(name, tld.ID).One()
 			if err != nil {
 				util.Error(err, w)
 				return
@@ -90,7 +90,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 			// no domain lets grab one using what we assume is a duuid
 			if duuid := params.Get("domain"); duuid != "" {
 				log.Info("duuid: " + duuid)
-				domain, err = domains.GetByUUID(duuid).Get()
+				domain, err = domains.GetByUUID(duuid).One()
 				if err != nil {
 					util.Error(err, w)
 					return

@@ -1,13 +1,16 @@
-package domain
+package domains
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
-	db "github.com/jawr/dns/database/models/domain"
-	tlds "github.com/jawr/dns/database/models/tld"
+	db "github.com/jawr/dns/database/models/domains"
+	"github.com/jawr/dns/database/models/tlds"
+	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest/paginator"
 	"github.com/jawr/dns/rest/util"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 var routes = util.Routes{
@@ -55,7 +58,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 			args = append(args, params.Get(k))
 		case "email":
 			// special case which overrides results
-			domainList, err := db.GetByJoinWhoisEmails(params.Get(k))
+			domainList, err := db.GetByJoinWhoisEmails(params.Get(k)).List()
 			util.ToJSON(domainList, err, w)
 			return
 		case "name":
@@ -93,7 +96,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 func ByUUID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uuid := vars["uuid"]
-	domain, err := db.GetByUUID(uuid).Get()
+	domain, err := db.GetByUUID(uuid).One()
 	util.ToJSON(domain, err, w)
 }
 
@@ -104,6 +107,6 @@ func ByName(w http.ResponseWriter, r *http.Request) {
 		util.Error(err, w)
 		return
 	}
-	domain, err := db.GetByNameAndTLD(name, tld.ID).Get()
+	domain, err := db.GetByNameAndTLD(name, tld.ID).One()
 	util.ToJSON(domain, err, w)
 }
