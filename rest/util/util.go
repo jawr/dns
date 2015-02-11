@@ -6,12 +6,9 @@ import (
 	"reflect"
 )
 
-func Use(handler http.HandlerFunc, mid ...func(http.Handler) http.HandlerFunc) http.HandlerFunc {
-	for _, m := range mid {
-		handler = m(handler)
-	}
-	return handler
-}
+const (
+	UUID_REGEX string = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+)
 
 func parseError(err error, w http.ResponseWriter) {
 	// TODO: switch error to decide what error code

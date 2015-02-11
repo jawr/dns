@@ -1,4 +1,4 @@
-package tld
+package tlds
 
 import (
 	"fmt"
@@ -36,93 +36,6 @@ func New(name string) (TLD, error) {
 }
 
 func (t TLD) UID() string { return t.Name }
-
-const (
-	SELECT string = "SELECT * FROM tld "
-)
-
-func GetAll() string {
-	return SELECT
-}
-
-func GetByID() string {
-	return SELECT + "WHERE id = $1"
-}
-
-func GetByName() string {
-	return SELECT + "WHERE name = $1"
-}
-
-func parseRow(row connection.Row) (TLD, error) {
-	t := TLD{}
-	err := row.Scan(&t.ID, &t.Name)
-	return t, err
-
-}
-
-func Search(params url.Values, idx, limit int) ([]TLD, error) {
-	query := GetAll()
-	var where []string
-	var args []interface{}
-	i := 1
-	for k, _ := range params {
-		switch k {
-		case "name":
-		case "id":
-			where = append(where, fmt.Sprintf(k+" = $%d", i))
-			args = append(args, params.Get(k))
-			i++
-		}
-	}
-	if len(where) > 0 {
-		query += "WHERE " + strings.Join(where, " AND ") + " "
-	}
-	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, idx)
-	return GetList(query, args...)
-}
-
-func Get(query string, args ...interface{}) (TLD, error) {
-	var result TLD
-	if len(args) == 1 {
-		switch reflect.TypeOf(args[0]).Kind() {
-		case reflect.Int32:
-			if i, ok := cacheGetID.Check(query, args[0].(int32)); ok {
-				return i.(TLD), nil
-			}
-			defer func() {
-				cacheGetID.Add(result, query, args[0].(int32))
-			}()
-		}
-	}
-	conn, err := connection.Get()
-	if err != nil {
-		return TLD{}, err
-	}
-	row := conn.QueryRow(query, args...)
-	result, err = parseRow(row)
-	return result, err
-}
-
-func GetList(query string, args ...interface{}) ([]TLD, error) {
-	conn, err := connection.Get()
-	if err != nil {
-		return []TLD{}, err
-	}
-	rows, err := conn.Query(query, args...)
-	defer rows.Close()
-	if err != nil {
-		return []TLD{}, err
-	}
-	var list []TLD
-	for rows.Next() {
-		rt, err := parseRow(rows)
-		if err != nil {
-			return list, err
-		}
-		list = append(list, rt)
-	}
-	return list, rows.Err()
-}
 
 func Detect(s string) (TLD, error) {
 	t, err := Get(GetByName(), s)

@@ -51,11 +51,11 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 			where = append(where, fmt.Sprintf(k+" = $%d", i))
 			args = append(args, params.Get(k))
 			i++
-		case "duuid":
+		case "duuid", "domain":
 			where = append(where, fmt.Sprintf("domain = $%d", i))
 			args = append(args, params.Get(k))
 			i++
-		case "domain":
+		case "name":
 			name, tld, err := tlds.DetectDomainAndTLD(params.Get(k))
 			if err != nil {
 				util.Error(err, w)
@@ -80,6 +80,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	log.Info("Args: %+v", args)
 	records, err := db.GetList(query, args...)
 	if err != nil {
+		log.Error("Here")
 		util.Error(err, w)
 		return
 	}
@@ -87,7 +88,8 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	if len(records) == 0 {
 		if len(domain.Name) == 0 {
 			// no domain lets grab one using what we assume is a duuid
-			if duuid := params.Get("duiid"); duuid != "" {
+			if duuid := params.Get("domain"); duuid != "" {
+				log.Info("duuid: " + duuid)
 				domain, err = domains.GetByUUID(duuid).Get()
 				if err != nil {
 					util.Error(err, w)
