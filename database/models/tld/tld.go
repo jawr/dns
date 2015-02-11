@@ -1,11 +1,7 @@
 package tlds
 
 import (
-	"fmt"
-	"github.com/jawr/dns/database/cache"
 	"github.com/jawr/dns/database/connection"
-	"net/url"
-	"reflect"
 	"strings"
 )
 
@@ -14,44 +10,37 @@ type TLD struct {
 	Name string `json:"name"`
 }
 
-var c = cache.New()
-var cacheGetID = cache.NewCacheInt32()
-
 func New(name string) (TLD, error) {
-	if t, ok := c.Check(name); ok {
-		return t.(TLD), nil
-	}
 	conn, err := connection.Get()
 	if err != nil {
 		return TLD{}, err
 	}
 	var id int32
 	err = conn.QueryRow("SELECT insert_tld($1)", name).Scan(&id)
-	t := TLD{
+	tld := TLD{
 		ID:   id,
 		Name: name,
 	}
-	c.Add(t)
-	return t, err
+	return tld, err
 }
 
 func (t TLD) UID() string { return t.Name }
 
 func Detect(s string) (TLD, error) {
-	t, err := Get(GetByName(), s)
+	tld, err := GetByName(s).One()
 	if err != nil {
 		args := strings.Split(s, ".")
 		if len(args) > 1 {
 			return Detect(strings.Join(args[1:], "."))
 		}
-		return TLD{}, err
+		return tld, err
 	}
-	return t, err
+	return tld, err
 }
 
 func DetectDomainAndTLD(s string) (string, TLD, error) {
-	t, err := Detect(s)
-	s = strings.TrimSuffix(s, "."+t.Name)
+	tld, err := Detect(s)
+	s = strings.TrimSuffix(s, "."+tld.Name)
 	args := strings.Split(s, ".")
-	return args[len(args)-1], t, err
+	return args[len(args)-1], tld, err
 }
