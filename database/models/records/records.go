@@ -9,6 +9,7 @@ import (
 	"github.com/jawr/dns/database/models/domains"
 	"github.com/jawr/dns/database/models/records/types"
 	"github.com/jawr/dns/database/models/tlds"
+	"github.com/jawr/dns/database/models/zonefile/parser"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/util"
 	"strconv"
@@ -28,22 +29,31 @@ type Record struct {
 	Args   Args           `json:"args"`
 	Type   types.Type     `json:"type"`
 	Date   time.Time      `json:"parse_date"`
+	Parser parser.Parser  `json:"parser,omitempty"`
 	Added  time.Time      `json:"added"`
 }
 
+// New creates a new Record, it takes the entire resource record line, the origin of the zonefile, the tld associated, the ttl and a parse date. It then creates a formalized Record.
 func New(line, origin string, tld tlds.TLD, ttl uint, date time.Time) (Record, error) {
 	fields := strings.Fields(line)
 	r := Record{}
 
-	name := fields[0]
+	origName := fields[0]
+	name := origName
+	// set origin if it's not already there
 	if !strings.HasSuffix(name, ".") {
 		name += "." + origin
 	}
+	// strip domain name
+	name = domains.CleanDomain(name, tld)
 	r.Domain = domains.New(name, tld)
-	r.Name = name
-	if name == domains.CleanDomain(r.Name, tld) {
-		r.Name = "@"
+	origName = strings.TrimSuffix(origName, ".")
+	name = strings.TrimSuffix(origName, r.Domain.String())
+	// check if we are referencing top level
+	if len(name) == 0 {
+		name = "@"
 	}
+	r.Name = name
 	r.Args.TTL = ttl
 
 	typeIdx := 1
@@ -88,8 +98,8 @@ func (r Record) Insert() error {
 	}
 	_, err = conn.Exec(
 		fmt.Sprintf(`INSERT INTO record__%d_%d
-				(uuid, domain, name, args, record_type, parser_date) VALUES
-				($1, $2, $3, $4, $5, $6)`,
+				(uuid, domain, name, args, record_type, parser_date, parser) VALUES
+				($1, $2, $3, $4, $5, $6, $7)`,
 			r.Type.ID,
 			r.Domain.TLD.ID,
 		),
@@ -99,6 +109,7 @@ func (r Record) Insert() error {
 		string(args),
 		r.Type.ID,
 		r.Date,
+		r.Parser.ID,
 	)
 	return err
 }

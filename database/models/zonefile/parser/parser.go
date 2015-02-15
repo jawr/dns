@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/tlds"
+	"github.com/lib/pq"
 	"regexp"
 	"strings"
 	"time"
@@ -17,13 +18,13 @@ type Log struct {
 }
 
 type Parser struct {
-	ID       int32      `json:"id"`
-	Filename string     `json:"filename"`
-	Started  time.Time  `json:"started"`
-	Finished *time.Time `json:"finished"`
-	Date     time.Time  `json:"date"`
-	TLD      tlds.TLD   `json:"tld"`
-	Logs     []Log      `json:"logs"`
+	ID       int32       `json:"id"`
+	Filename string      `json:"filename"`
+	Started  pq.NullTime `json:"started"`
+	Finished pq.NullTime `json:"finished"`
+	Date     time.Time   `json:"date"`
+	TLD      tlds.TLD    `json:"tld"`
+	Logs     []Log       `json:"logs"`
 }
 
 var tldRE *regexp.Regexp = regexp.MustCompile(`^(\d{8})\-([\w\d\-]+)[\-\.]zone[\-\.](data|gz)`)
@@ -96,7 +97,7 @@ func (p *Parser) Finish() error {
 		return err
 	}
 	t := time.Now()
-	p.Finished = &t
+	p.Finished.Time = t
 	_, err = conn.Exec("UPDATE parser SET finished_at = $1 WHERE id = $2", p.Finished, p.ID)
 	return err
 }

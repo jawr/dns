@@ -2,9 +2,11 @@ package records
 
 import (
 	"code.google.com/p/go-uuid/uuid"
+	"encoding/json"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/domains"
 	"github.com/jawr/dns/database/models/records/types"
+	"github.com/jawr/dns/database/models/zonefile/parser"
 )
 
 const (
@@ -35,11 +37,21 @@ func GetByUUID(uuid string) Result {
 	return newResult(SELECT+"WHERE uuid = $1", uuid)
 }
 
+func GetByDomain(domain domains.Domain) Result {
+	return newResult(SELECT+"WHERE domain = $1", domain.UUID.String())
+}
+
 func parseRow(row connection.Row) (Record, error) {
 	r := Record{}
 	var rUUID, dUUID string
 	var rtID int32
-	err := row.Scan(&rUUID, &dUUID, &r.Name, &r.Args, &rtID, &r.Date, &r.Added)
+	var pID int32
+	var jsonBuf []byte
+	err := row.Scan(&rUUID, &dUUID, &r.Name, &jsonBuf, &rtID, &r.Date, &pID, &r.Added)
+	if err != nil {
+		return r, err
+	}
+	err = json.Unmarshal(jsonBuf, &r.Args)
 	if err != nil {
 		return r, err
 	}
@@ -49,6 +61,13 @@ func parseRow(row connection.Row) (Record, error) {
 		return r, err
 	}
 	r.Type, err = types.GetByID(rtID).One()
+	if err != nil {
+		return r, err
+	}
+	p, err := parser.Get(parser.GetByID(), pID)
+	if err != nil {
+	}
+	r.Parser = p
 	return r, err
 }
 

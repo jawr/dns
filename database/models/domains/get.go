@@ -18,10 +18,18 @@ type Result struct {
 func newResult(query string, args ...interface{}) Result {
 	return Result{
 		func() (Domain, error) {
-			return Get(query, args...)
+			domain, err := Get(query, args...)
+			if err == nil {
+				addToCache(domain)
+			}
+			return domain, err
 		},
 		func() ([]Domain, error) {
-			return GetList(query, args...)
+			domainList, err := GetList(query, args...)
+			for _, domain := range domainList {
+				addToCache(domain)
+			}
+			return domainList, err
 		},
 	}
 }
@@ -41,6 +49,16 @@ func GetByNameAndTLD(name string, tld int32) Result {
 }
 
 func GetByUUID(uuid string) Result {
+	if domain, ok := byUUID[uuid]; ok {
+		return Result{
+			func() (Domain, error) {
+				return domain, nil
+			},
+			func() ([]Domain, error) {
+				return []Domain{domain}, nil
+			},
+		}
+	}
 	return newResult(
 		SELECT+"WHERE uuid = $1",
 		uuid,

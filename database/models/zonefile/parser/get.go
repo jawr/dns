@@ -1,9 +1,11 @@
 package parser
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/tlds"
+	"github.com/jawr/dns/log"
 	"net/url"
 	"strings"
 )
@@ -23,7 +25,13 @@ func GetByID() string {
 func parseRow(row connection.Row) (Parser, error) {
 	p := Parser{}
 	var tldID int32
-	err := row.Scan(&p.ID, &p.Filename, &p.Started, p.Finished, &p.Date, &tldID, &p.Logs)
+	var jsonBuf []byte
+	err := row.Scan(&p.ID, &p.Filename, &p.Started, &p.Finished, &p.Date, &tldID, &jsonBuf)
+	if err != nil {
+		log.Error("EREERERE")
+		return p, err
+	}
+	err = json.Unmarshal(jsonBuf, &p.Logs)
 	if err != nil {
 		return p, err
 	}

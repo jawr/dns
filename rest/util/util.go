@@ -42,5 +42,6 @@ func ToJSON(v interface{}, err error, w http.ResponseWriter) {
 			b = []byte("[]")
 		}
 	}
+	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 }

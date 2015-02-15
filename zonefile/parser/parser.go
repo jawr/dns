@@ -256,6 +256,7 @@ func (p *Parser) handleLine(line string) {
 		log.Warn("handleLine:line: %s", line)
 		return
 	}
+	rr.Parser = p.Parser
 	err = p.domainInsert.Add(&rr.Domain)
 	if err != nil {
 		log.Error("handleLine: Unable to bulk insert Domain: %s", err)
