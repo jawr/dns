@@ -8,6 +8,7 @@ import (
 	"github.com/jawr/dns/database/models/tlds"
 	db "github.com/jawr/dns/database/models/whois"
 	"github.com/jawr/dns/log"
+	domainsAPI "github.com/jawr/dns/rest/domains"
 	"github.com/jawr/dns/rest/paginator"
 	"github.com/jawr/dns/rest/util"
 	"github.com/jawr/dns/whois/dispatcher"
@@ -25,9 +26,19 @@ var routes = util.Routes{
 	},
 }
 
+var overloadRoutes = util.Routes{
+	util.Route{
+		"ByDomain",
+		"GET",
+		"/domain/{uuid:" + util.UUID_REGEX + "}/whois",
+		domainsAPI.ByUUID(ByDomainUUID),
+	},
+}
+
 func Setup(router *mux.Router) {
 	subRouter := router.PathPrefix("/whois").Subrouter()
 	util.SetupRouter(subRouter, "Whois", routes)
+	util.SetupRouter(router, "WhoisOverload", overloadRoutes)
 }
 
 /*
@@ -108,37 +119,8 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	util.ToJSON(records, err, w)
 }
 
-/*
-func Post(w http.ResponseWriter, r *http.Request) {
-	log.Info("%+v", r.Body)
-	decoder := json.NewDecoder(r.Body)
-	var post struct {
-		UUID  string `json:"uuid,omitempty"`
-		Query string `json:"query,omitempty"`
-	}
-	err := decoder.Decode(&post)
-	if err != nil {
-		util.ToJSON(db.Result{}, err, w)
-		return
-	}
-	log.Info("%+v", post)
-	if len(post.UUID) > 0 {
-		d, err := domain.GetByUUID(post.UUID).Get()
-		if err != nil {
-			util.ToJSON(db.Result{}, err, w)
-			return
-		}
-		c := dispatcher.AddDomain(d)
-		result := <-c
-		util.ToJSON([]db.Result{result}, err, w)
-		return
-
-	} else if len(post.Query) > 0 {
-		c := dispatcher.AddQuery(post.Query)
-		result := <-c
-		util.ToJSON([]db.Result{result}, err, w)
-		return
-	}
-	// do error
+func ByDomainUUID(w http.ResponseWriter, r *http.Request, domain domains.Domain) {
+	record, err := db.GetByDomain(domain).One()
+	// could push to dispatcher based on query params
+	util.ToJSON(record, err, w)
 }
-*/

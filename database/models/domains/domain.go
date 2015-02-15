@@ -11,7 +11,7 @@ import (
 type Domain struct {
 	UUID uuid.UUID `json:"uuid"`
 	Name string    `json:"name"`
-	TLD  tlds.TLD  `json:"tlds"`
+	TLD  tlds.TLD  `json:"tld"`
 }
 
 func New(name string, t tlds.TLD) Domain {

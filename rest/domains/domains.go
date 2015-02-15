@@ -24,13 +24,13 @@ var routes = util.Routes{
 		"ByUUID",
 		"GET",
 		"/{uuid:" + util.UUID_REGEX + "}",
-		ByUUID,
+		ByUUID(serveDomain),
 	},
 	util.Route{
 		"ByName",
 		"GET",
 		"/{name}",
-		ByName,
+		ByName(serveDomain),
 	},
 }
 
@@ -93,20 +93,32 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	util.ToJSON(domainList, err, w)
 }
 
-func ByUUID(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	uuid := vars["uuid"]
-	domain, err := db.GetByUUID(uuid).One()
-	util.ToJSON(domain, err, w)
+func ByUUID(fn func(http.ResponseWriter, *http.Request, db.Domain)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		domain, err := db.GetByUUID(uuid).One()
+		if err != nil {
+			util.Error(err, w)
+			return
+		}
+		fn(w, r, domain)
+	}
 }
 
-func ByName(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	name, tld, err := tlds.DetectDomainAndTLD(vars["name"])
-	if err != nil {
-		util.Error(err, w)
-		return
+func ByName(fn func(http.ResponseWriter, *http.Request, db.Domain)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		name, tld, err := tlds.DetectDomainAndTLD(vars["name"])
+		if err != nil {
+			util.Error(err, w)
+			return
+		}
+		domain, err := db.GetByNameAndTLD(name, tld.ID).One()
+		fn(w, r, domain)
 	}
-	domain, err := db.GetByNameAndTLD(name, tld.ID).One()
-	util.ToJSON(domain, err, w)
+}
+
+func serveDomain(w http.ResponseWriter, r *http.Request, domain db.Domain) {
+	util.ToJSON(domain, nil, w)
 }

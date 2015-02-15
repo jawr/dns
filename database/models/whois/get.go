@@ -39,6 +39,10 @@ func GetByHasEmail(email string) Result {
 	return newResult(SELECT+"WHERE emails ? $1", email)
 }
 
+func GetByDomain(domain domains.Domain) Result {
+	return newResult(SELECT+"WHERE domain = $1", domain.UUID.String())
+}
+
 func parseRow(row connection.Row) (Record, error) {
 	w := Record{}
 	var duuid, wuuid string

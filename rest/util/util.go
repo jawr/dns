@@ -1,6 +1,7 @@
 package util
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"reflect"
@@ -12,8 +13,14 @@ const (
 
 func parseError(err error, w http.ResponseWriter) {
 	// TODO: switch error to decide what error code
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write([]byte(`{"error": "` + err.Error() + `"}`))
+	switch err {
+	case sql.ErrNoRows:
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte(`{"error": "Resource not found."}`))
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "` + err.Error() + `"}`))
+	}
 }
 
 func Error(err error, w http.ResponseWriter) {
