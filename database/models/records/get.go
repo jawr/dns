@@ -64,11 +64,10 @@ func parseRow(row connection.Row) (Record, error) {
 	if err != nil {
 		return r, err
 	}
-	p, err := parser.Get(parser.GetByID(), pID)
-	if err != nil {
-	}
+	// ignore error as we dont need a Parser
+	p, _ := parser.Get(parser.GetByID(), pID)
 	r.Parser = p
-	return r, err
+	return r, nil
 }
 
 func Get(query string, args ...interface{}) (Record, error) {
@@ -100,42 +99,3 @@ func GetList(query string, args ...interface{}) ([]Record, error) {
 	}
 	return list, rows.Err()
 }
-
-/*
-func Search(params url.Values, idx, limit int) ([]Record, error) {
-	query := GetAll()
-	var where []string
-	var args []interface{}
-	i := 1
-	for k, _ := range params {
-		switch k {
-		// TODO: handle times and json
-		case "name", "domain", "uuid", "record_type":
-			where = append(where, fmt.Sprintf(k+" = $%d", i))
-			args = append(args, params.Get(k))
-			i++
-		case "tld":
-			where = append(where, fmt.Sprintf(k+" = $%d", i))
-			t, err := tld.Get(tld.GetByName(), params.Get(k))
-			if err != nil {
-				return []Record{}, err
-			}
-			args = append(args, t.ID)
-			i++
-		case "type":
-			where = append(where, fmt.Sprintf(k+" = $%d", i))
-			rt, err := record_type.Get(record_type.GetByName(), params.Get(k))
-			if err != nil {
-				return []Record{}, err
-			}
-			args = append(args, rt.ID)
-			i++
-		}
-	}
-	if len(where) > 0 {
-		query += "WHERE " + strings.Join(where, " AND ") + " "
-	}
-	query += fmt.Sprintf("LIMIT %d OFFSET %d", limit, idx)
-	return GetList(query, args...)
-}
-*/

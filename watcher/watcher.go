@@ -1,8 +1,8 @@
 package watcher
 
 import (
-	db "github.com/jawr/dns/database/models/watcher"
-	"github.com/jawr/dns/database/models/watcher/interval"
+	db "github.com/jawr/dns/database/models/watchers"
+	"github.com/jawr/dns/database/models/watchers/intervals"
 	digParser "github.com/jawr/dns/dig/parser"
 	"github.com/jawr/dns/log"
 	whoisParser "github.com/jawr/dns/whois/parser"
@@ -10,7 +10,7 @@ import (
 )
 
 type Watcher struct {
-	Intervals   []interval.Interval
+	Intervals   []intervals.Interval
 	Cron        *cron.Cron
 	DigParser   digParser.Parser
 	WhoisParser whoisParser.Parser
@@ -18,11 +18,11 @@ type Watcher struct {
 
 func New() (Watcher, error) {
 	w := Watcher{}
-	intervals, err := interval.GetList(interval.GetAll())
+	intervalList, err := intervals.GetAll().List()
 	if err != nil {
 		return w, err
 	}
-	w.Intervals = intervals
+	w.Intervals = intervalList
 	w.Cron = cron.New()
 	w.DigParser = digParser.New()
 	w.WhoisParser = whoisParser.New()
@@ -39,8 +39,8 @@ func (w Watcher) Start() {
 	w.Cron.Start()
 }
 
-func (w Watcher) handler(i interval.Interval) {
-	list, err := db.GetList(db.GetByInterval(), i.ID)
+func (w Watcher) handler(i intervals.Interval) {
+	list, err := db.GetByInterval(i).List()
 	if err != nil {
 		log.Error("Error parsing interval (%d): %s", i.ID, err)
 		return
@@ -49,5 +49,6 @@ func (w Watcher) handler(i interval.Interval) {
 	for _, watch := range list {
 		w.DigParser.Exec(watch.Domain)
 		w.WhoisParser.Exec(watch.Domain)
+		watch.Save()
 	}
 }

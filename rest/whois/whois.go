@@ -65,7 +65,10 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 		case "duuid", "domain":
 			where = append(where, fmt.Sprintf("domain = $%d", i))
 			args = append(args, params.Get(k))
-			params.Set("domain", params.Get(k))
+			v := params.Get(k)
+			params.Del("duuid")
+			params.Del("domain")
+			params.Set("domain", v)
 			i++
 		case "name":
 			name, tld, err := tlds.DetectDomainAndTLD(params.Get(k))
@@ -73,7 +76,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 				util.Error(err, w)
 				return
 			}
-			domain, err = domains.GetByNameAndTLD(name, tld.ID).One()
+			domain, err = domains.GetByNameAndTLD(name, tld).One()
 			if err != nil {
 				util.Error(err, w)
 				return
@@ -98,14 +101,10 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	args = append(args, limit, offset)
 	log.Info("Query: " + query)
 	log.Info("Args: %+v", args)
-	records, err := db.GetList(query, args...)
-	if err != nil {
-		log.Error("Here")
-		util.Error(err, w)
-		return
-	}
+	recordList, err := db.GetList(query, args...)
+	// check for non sql errors
 	// if we have no results dispatch a worker to get one
-	if len(records) == 0 {
+	if len(recordList) == 0 {
 		if len(domain.Name) == 0 {
 			// no domain lets grab one using what we assume is a duuid
 			if duuid := params.Get("domain"); duuid != "" {
@@ -123,9 +122,9 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 			return
 		}
 		result := <-dispatcher.AddDomain(domain)
-		records = append(records, result)
+		recordList = append(recordList, result)
 	}
-	util.ToJSON(records, err, w)
+	util.ToJSON(recordList, err, w)
 }
 
 func ByDomainUUID(w http.ResponseWriter, r *http.Request, domain domains.Domain) {

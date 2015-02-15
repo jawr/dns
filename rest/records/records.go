@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jawr/dns/database/models/domains"
 	db "github.com/jawr/dns/database/models/records"
+	"github.com/jawr/dns/dig/dispatcher"
 	"github.com/jawr/dns/log"
 	domainsAPI "github.com/jawr/dns/rest/domains"
 	"github.com/jawr/dns/rest/paginator"
@@ -64,6 +65,10 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 		case "duuid", "domain":
 			where = append(where, fmt.Sprintf("domain = $%d", i))
 			args = append(args, params.Get(k))
+			v := params.Get(k)
+			params.Del("duuid")
+			params.Del("domain")
+			params.Set("domain", v)
 			i++
 		}
 	}
@@ -75,6 +80,30 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	log.Info("Query: " + query)
 	log.Info("Args: %+v", args)
 	recordList, err := db.GetList(query, args...)
+	if err != nil {
+		util.Error(err, w)
+		return
+	}
+	// check for none sql errors
+	// if we have no results dispatch a worker to get one
+	if len(recordList) == 0 {
+		// no domain lets grab one using what we assume is a duuid
+		log.Info("no records")
+		if duuid := params.Get("domain"); duuid != "" {
+			log.Info("duuid: " + duuid)
+			domain, err := domains.GetByUUID(duuid).One()
+			if err != nil {
+				log.Info("herererere")
+				util.Error(err, w)
+				return
+			}
+			results := <-dispatcher.AddDomain(domain)
+			log.Info("%v", results)
+			for _, result := range results {
+				recordList = append(recordList, result)
+			}
+		}
+	}
 	util.ToJSON(cleanParserFromRecords(recordList), err, w)
 }
 
@@ -89,7 +118,6 @@ func cleanParserFromRecords(recordList []db.Record) []Domain {
 	structs.DefaultTagName = "json"
 	for _, r := range recordList {
 		m := structs.Map(r)
-		m["type"] = r.Type.Name
 		m["parse_date"] = r.Date
 		m["added"] = r.Added
 		//m["domain_uuid"] = domain.UUID.String()

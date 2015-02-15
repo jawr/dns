@@ -39,7 +39,7 @@ func (d Domain) Insert() error {
 	if err != nil {
 		return err
 	}
-	_, err = conn.Exec("INSERT INTO domain (uuid, name, tlds) VALUES ($1, $2, $3)",
+	_, err = conn.Exec("INSERT INTO domain (uuid, name, tld) VALUES ($1, $2, $3)",
 		d.UUID.String(),
 		d.Name,
 		d.TLD.ID,

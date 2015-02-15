@@ -88,6 +88,19 @@ CREATE TABLE watcher (
 	UNIQUE (domain)
 );
 
+DROP TABLE IF EXISTS users CASCADE;
+DROP SEQUENCE IF EXISTS users_id CASCADE;
+CREATE TABLE users (
+	id SERIAL,
+	email VARCHAR(300),
+	password BYTEA,
+	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	settings jsonb DEFAULT '{}'::jsonb,
+	PRIMARY KEY (id),
+	UNIQUE (email)
+);
+
 CREATE OR REPLACE FUNCTION update_updated_column()
 	RETURNS TRIGGER
 	LANGUAGE plpgsql
@@ -102,6 +115,8 @@ CREATE OR REPLACE FUNCTION update_updated_column()
 	END;
 	$$;
 
+CREATE TRIGGER update_users_updated BEFORE UPDATE ON users
+	FOR EACH ROW EXECUTE PROCEDURE update_updated_column();
 
 CREATE TRIGGER update_watcher_updated BEFORE UPDATE ON watcher
 	FOR EACH ROW EXECUTE PROCEDURE update_updated_column();
@@ -118,6 +133,21 @@ CREATE OR REPLACE FUNCTION insert_interval(VARCHAR)
 	EXCEPTION WHEN UNIQUE_VIOLATION THEN
 		SELECT id INTO interval_id FROM interval WHERE value = $1;
 		RETURN interval_id;
+	END;
+	$$;
+
+CREATE OR REPLACE FUNCTION insert_user(VARCHAR, BYTEA)
+	RETURNS INT
+	LANGUAGE plpgsql
+	AS $$
+	DECLARE
+		user_id INT;
+	BEGIN
+		INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id INTO user_id;
+		RETURN user_id;
+	EXCEPTION WHEN UNIQUE_VIOLATION THEN
+		SELECT id INTO user_id FROM users WHERE email = $1;
+		RETURN user_id;
 	END;
 	$$;
 

@@ -41,10 +41,10 @@ func GetByJoinWhoisEmails(email string) Result {
 	)
 }
 
-func GetByNameAndTLD(name string, tld int32) Result {
+func GetByNameAndTLD(name string, tld tlds.TLD) Result {
 	return newResult(
 		SELECT+"WHERE name = $1 AND tld = $2",
-		name, tld,
+		name, tld.ID,
 	)
 }
 

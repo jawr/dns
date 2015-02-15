@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/jawr/dns/database/models/domains"
+	"github.com/jawr/dns/database/models/tlds"
 	db "github.com/jawr/dns/database/models/watchers"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest/paginator"
@@ -74,6 +75,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 func Create(w http.ResponseWriter, r *http.Request) {
 	var post struct {
 		Domain   string `json:"domain"`
+		Name     string `json:"name"`
 		Interval string `json:"interval"`
 	}
 	decoder := json.NewDecoder(r.Body)
@@ -82,10 +84,28 @@ func Create(w http.ResponseWriter, r *http.Request) {
 		util.Error(err, w)
 		return
 	}
-	domain, err := domains.GetByUUID(post.Domain).One()
-	if err != nil {
-		util.Error(err, w)
-		return
+	var domain domains.Domain
+	if len(post.Name) > 0 {
+		name, tld, err := tlds.DetectDomainAndTLD(post.Name)
+		if err != nil {
+			util.Error(err, w)
+			return
+		}
+		domain, err = domains.GetByNameAndTLD(name, tld).One()
+		if err != nil {
+			domain = domains.New(name, tld)
+			err = domain.Insert()
+			if err != nil {
+				util.Error(err, w)
+				return
+			}
+		}
+	} else {
+		domain, err = domains.GetByUUID(post.Domain).One()
+		if err != nil {
+			util.Error(err, w)
+			return
+		}
 	}
 	watcher, err := db.New(domain, post.Interval)
 	util.ToJSON(watcher, err, w)

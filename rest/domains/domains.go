@@ -114,7 +114,15 @@ func ByName(fn func(http.ResponseWriter, *http.Request, db.Domain)) http.Handler
 			util.Error(err, w)
 			return
 		}
-		domain, err := db.GetByNameAndTLD(name, tld.ID).One()
+		domain, err := db.GetByNameAndTLD(name, tld).One()
+		if err != nil {
+			domain = db.New(name, tld)
+			err = domain.Insert()
+			if err != nil {
+				util.Error(err, w)
+				return
+			}
+		}
 		fn(w, r, domain)
 	}
 }

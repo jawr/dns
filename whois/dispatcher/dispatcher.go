@@ -55,7 +55,7 @@ func AddQuery(q string) Record {
 		log.Error("Whois dipatcher: Unable to detect TLD and domain: %s (%s)", err, q)
 		return res
 	}
-	d, err := domains.GetByNameAndTLD(s, t.ID).One()
+	d, err := domains.GetByNameAndTLD(s, t).One()
 	if err != nil {
 		log.Error("Whois dispatcher: unable to get domain: %s (%s)", err, s)
 		d = domains.New(s, t)

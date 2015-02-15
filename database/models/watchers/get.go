@@ -35,8 +35,8 @@ func GetByID(id int32) Result {
 	return newResult(SELECT+"WHERE id = $1", id)
 }
 
-func GetByInterval(id int32) Result {
-	return newResult(SELECT+"WHERE interval = $1", id)
+func GetByInterval(interval intervals.Interval) Result {
+	return newResult(SELECT+"WHERE interval = $1", interval.ID)
 }
 
 func GetByDomain(uuid string) Result {

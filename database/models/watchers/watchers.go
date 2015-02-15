@@ -52,10 +52,11 @@ func (w *Watcher) Save() error {
 		return err
 	}
 	w.Logs = append(w.Logs, Log{w.Updated})
+	w.Updated = time.Now()
 	b, err := json.Marshal(w.Logs)
 	if err != nil {
 		return err
 	}
-	_, err = conn.Exec("UPDATE watcher SET logs = $1 WHERE id = $2", b, w.ID)
+	_, err = conn.Exec("UPDATE watcher SET updated = $1, logs = $2 WHERE id = $3", w.Updated, b, w.ID)
 	return err
 }
