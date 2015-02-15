@@ -32,12 +32,15 @@ func New(d domains.Domain, data []byte) (Record, error) {
 		panic(err)
 	}
 
+	fmt.Printf("domain: %s\n", d)
 	emails := parseEmails(raw)
+	fmt.Printf("Emails: %+v\n", emails)
 
 	rawContacts, err := json.Marshal(&raw.Contacts)
 	if err != nil {
 		panic(err)
 	}
+	// strip dates and make a uuid from raw
 	rawData, err := json.Marshal(&raw.Data)
 	uuidRaw := fmt.Sprintf("%s", raw.Raw)
 	uuidRaw = uuidRawRE.ReplaceAllString(uuidRaw, "")

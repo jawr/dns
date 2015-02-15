@@ -65,6 +65,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 		case "duuid", "domain":
 			where = append(where, fmt.Sprintf("domain = $%d", i))
 			args = append(args, params.Get(k))
+			params.Set("domain", params.Get(k))
 			i++
 		case "name":
 			name, tld, err := tlds.DetectDomainAndTLD(params.Get(k))
@@ -79,6 +80,14 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 			}
 			where = append(where, fmt.Sprintf("domain = $%d", i))
 			args = append(args, domain.UUID.String())
+			i++
+		case "email":
+			where = append(where, fmt.Sprintf("emails ? $%d", i))
+			args = append(args, params.Get(k))
+			i++
+		case "raw":
+			where = append(where, fmt.Sprintf("raw_whois ->>0 ILIKE $%d", i))
+			args = append(args, "%"+params.Get(k)+"%")
 			i++
 		}
 	}
@@ -110,7 +119,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 		}
 		if len(domain.Name) == 0 {
 			log.Error("Unable to detect domain for whois lookup, params: %+v", params)
-			util.Error(errors.New("Unable to detect domain for whois lookup."), w)
+			util.Error(errors.New("Unable to find domain for whois lookup."), w)
 			return
 		}
 		result := <-dispatcher.AddDomain(domain)

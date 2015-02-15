@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	//go parseZonefiles()
-	//go crawl()
+	go parseZonefiles()
+	go crawl()
 	startREST()
 }
 
@@ -63,7 +63,7 @@ func parseZonefiles() {
 	dir := config.GetString("zonefile_dir")
 	p := zonefile.New()
 	files := []string{
-		"20141113-net.zone.gz",
+		//"20141113-net.zone.gz",
 		"20140621-biz.zone.gz",
 		"20140622-biz.zone.gz",
 		"20141210-biz.zone.gz",

@@ -4,7 +4,6 @@ import (
 	"github.com/jawr/dns/database/models/domains"
 	"github.com/jawr/dns/database/models/records"
 	"github.com/jawr/dns/log"
-	"github.com/jawr/dns/util"
 	"os/exec"
 	"strings"
 	"time"
@@ -18,8 +17,6 @@ func New() Parser {
 }
 
 func (p *Parser) Exec(d domains.Domain) ([]records.Record, error) {
-	defer util.Un(util.Trace())
-	log.Info("Parse Dig " + d.String())
 	out, err := exec.Command("dig", "all", d.String()).Output()
 	if err != nil {
 		return []records.Record{}, err

@@ -44,23 +44,20 @@ type Raw struct {
 }
 
 func parseEmails(raw Raw) []string {
-	if len(raw.Emails) == 0 {
-		return []string{}
-	}
 	emails := make(map[string]bool)
 	for _, v := range raw.Emails {
 		emails[v] = true
 	}
-	if raw.Contacts.Tech != nil {
+	if raw.Contacts.Tech != nil && len(raw.Contacts.Tech.Email) > 0 {
 		emails[raw.Contacts.Tech.Email] = true
 	}
-	if raw.Contacts.Admin != nil {
+	if raw.Contacts.Admin != nil && len(raw.Contacts.Admin.Email) > 0 {
 		emails[raw.Contacts.Admin.Email] = true
 	}
-	if raw.Contacts.Billing != nil {
+	if raw.Contacts.Billing != nil && len(raw.Contacts.Billing.Email) > 0 {
 		emails[raw.Contacts.Billing.Email] = true
 	}
-	if raw.Contacts.Registrant != nil {
+	if raw.Contacts.Registrant != nil && len(raw.Contacts.Registrant.Email) > 0 {
 		emails[raw.Contacts.Registrant.Email] = true
 	}
 

@@ -43,7 +43,6 @@ func AddDomain(d domains.Domain) Record {
 		Domain: d,
 		Record: res,
 	}
-	log.Info("Add to Work")
 	Work <- wr
 	return res
 }

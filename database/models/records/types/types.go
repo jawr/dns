@@ -11,6 +11,11 @@ type Type struct {
 }
 
 func New(name string, tld tlds.TLD) (Type, error) {
+	if _, ok := byNameAndTLD[name]; ok {
+		if t, ok := byNameAndTLD[name][tld.ID]; ok {
+			return t, nil
+		}
+	}
 	conn, err := connection.Get()
 	if err != nil {
 		return Type{}, err
@@ -21,7 +26,11 @@ func New(name string, tld tlds.TLD) (Type, error) {
 		ID:   id,
 		Name: name,
 	}
+	if err == nil {
+		if _, ok := byNameAndTLD[name]; !ok {
+			byNameAndTLD[name] = make(map[int32]Type)
+		}
+		byNameAndTLD[name][tld.ID] = rt
+	}
 	return rt, err
 }
-
-func (rt Type) UID() string { return rt.Name }

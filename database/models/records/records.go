@@ -29,7 +29,7 @@ type Record struct {
 	Args   Args           `json:"args"`
 	Type   types.Type     `json:"type"`
 	Date   time.Time      `json:"parse_date"`
-	Parser parser.Parser  `json:"parser,omitempty"`
+	Parser parser.Parser  `json:"parser"`
 	Added  time.Time      `json:"added"`
 }
 
@@ -48,7 +48,9 @@ func New(line, origin string, tld tlds.TLD, ttl uint, date time.Time) (Record, e
 	name = domains.CleanDomain(name, tld)
 	r.Domain = domains.New(name, tld)
 	origName = strings.TrimSuffix(origName, ".")
-	name = strings.TrimSuffix(origName, r.Domain.String())
+	name = strings.TrimSuffix(origName, r.Domain.TLD.Name)
+	name = strings.TrimSuffix(name, r.Domain.Name)
+	name = strings.TrimSuffix(name, ".")
 	// check if we are referencing top level
 	if len(name) == 0 {
 		name = "@"

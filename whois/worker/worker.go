@@ -1,7 +1,6 @@
 package worker
 
 import (
-	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/whois/parser"
 )
 
@@ -31,11 +30,9 @@ func (w Worker) Start() {
 
 			select {
 			case work := <-w.Work:
-				log.Info("Got work")
 				work.Do(w)
 
 			case <-w.QuitChan:
-				log.Debug("worker%d: quit", w.ID)
 				return
 			}
 		}
