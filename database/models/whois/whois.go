@@ -32,9 +32,7 @@ func New(d domains.Domain, data []byte) (Record, error) {
 		panic(err)
 	}
 
-	fmt.Printf("domain: %s\n", d)
 	emails := parseEmails(raw)
-	fmt.Printf("Emails: %+v\n", emails)
 
 	rawContacts, err := json.Marshal(&raw.Contacts)
 	if err != nil {

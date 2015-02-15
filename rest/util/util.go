@@ -21,6 +21,7 @@ func parseError(err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"error": "` + err.Error() + `"}`))
 	}
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func Error(err error, w http.ResponseWriter) {
@@ -43,5 +44,6 @@ func ToJSON(v interface{}, err error, w http.ResponseWriter) {
 		}
 	}
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(b)
 }

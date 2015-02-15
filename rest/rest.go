@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jawr/dns/rest/domains"
 	"github.com/jawr/dns/rest/records"
+	"github.com/jawr/dns/rest/watchers"
 	"github.com/jawr/dns/rest/whois"
 	"net/http"
 )
@@ -14,5 +15,6 @@ func Setup() http.Handler {
 	domains.Setup(sr)
 	whois.Setup(sr)
 	records.Setup(sr)
+	watchers.Setup(sr)
 	return r
 }

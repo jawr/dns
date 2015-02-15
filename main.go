@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	go parseZonefiles()
-	go crawl()
+	//go parseZonefiles()
+	//go crawl()
 	startREST()
 }
 

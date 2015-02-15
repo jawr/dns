@@ -21,9 +21,14 @@ type Watcher struct {
 	Logs     []Log              `json:"logs"`
 }
 
-func New(d domains.Domain, i intervals.Interval) (Watcher, error) {
+func New(d domains.Domain, interval string) (Watcher, error) {
 	w := Watcher{}
 	w.Domain = d
+	i, err := intervals.New(interval)
+	if err != nil {
+		// TODO: better wrapper for our db errors so can see in log which package
+		return w, err
+	}
 	w.Interval = i
 	w.Updated = time.Now()
 	w.Added = time.Now()
@@ -36,9 +41,9 @@ func New(d domains.Domain, i intervals.Interval) (Watcher, error) {
 		i.ID,
 	).Scan(&w.ID)
 	if err != nil {
-		return GetByDomain(d.UUID.String()).One()
+		return w, err
 	}
-	return w, err
+	return GetByDomain(d.UUID.String()).One()
 }
 
 func (w *Watcher) Save() error {

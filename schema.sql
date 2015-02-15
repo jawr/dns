@@ -83,7 +83,7 @@ CREATE TABLE watcher (
 	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	interval INT NOT NULL references interval(id),
-	logs jsonb,
+	logs jsonb DEFAULT '[]'::jsonb,
 	PRIMARY KEY (id),
 	UNIQUE (domain)
 );
@@ -103,7 +103,7 @@ CREATE OR REPLACE FUNCTION update_updated_column()
 	$$;
 
 
-CREATE TRIGGER update_watcher_updated BEFORE INSERT ON watcher
+CREATE TRIGGER update_watcher_updated BEFORE UPDATE ON watcher
 	FOR EACH ROW EXECUTE PROCEDURE update_updated_column();
 
 CREATE OR REPLACE FUNCTION insert_interval(VARCHAR)
