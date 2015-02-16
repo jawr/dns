@@ -3,14 +3,24 @@ package main
 import (
 	"github.com/jawr/dns/crawler"
 	"github.com/jawr/dns/database/models/tlds"
-	"github.com/jawr/dns/database/models/users"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest"
 	"github.com/jawr/dns/watcher"
 	zonefile "github.com/jawr/dns/zonefile/parser"
 	"github.com/stathat/jconfig"
-	"net/http"
+	"os"
+	"os/signal"
 )
+
+func init() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+	go func() {
+		<-c
+		log.Info("Shutting down")
+		os.Exit(1)
+	}()
+}
 
 func main() {
 	//go parseZonefiles()
@@ -23,24 +33,6 @@ func main() {
 		}
 		w.Start()
 	}()
-	u, err := users.New("jess@lawrence.pm", "foobar")
-	if err != nil {
-		log.Error("%s", err)
-		return
-	}
-	log.Info("user: %+v", u)
-	log.Info("passchk1: %s", users.CheckPassword(u.Email, "1234"))
-	log.Info("passchk2: %s", users.CheckPassword(u.Email, "foobar"))
-	log.Info("passchk3: %s", users.CheckPassword(u.Email+"2", "foobar"))
-	log.Info("passchk4: %s", users.CheckPassword(u.Email, "1fff234"))
-	u, err = users.New("jess@lawrence.pm", "barrfooo")
-	if err != nil {
-		log.Error("%s", err)
-	}
-	u, err = users.New("jess@lawrence.pm", "foobar")
-	if err != nil {
-		log.Error("%s", err)
-	}
 	startREST()
 }
 
@@ -82,8 +74,7 @@ func testDetectDomainAndTLD() {
 }
 
 func startREST() {
-	h := rest.Setup()
-	http.ListenAndServe(":8080", h)
+	rest.Setup()
 }
 
 func parseZonefiles() {
