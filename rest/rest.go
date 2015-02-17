@@ -20,7 +20,6 @@ func Setup() {
 	}
 	defer sessionDB.Close()
 	defer reaper.Quit(reaper.Run(sessionDB, reaper.Options{}))
-	authoriser := auth.New(sessionDB)
 
 	// setup routes
 	r := mux.NewRouter()
@@ -29,6 +28,10 @@ func Setup() {
 	whois.Setup(sr)
 	records.Setup(sr)
 	watchers.Setup(sr)
+	auth.Setup(sr)
+
+	// setup authoriser
+	authoriser := auth.New(sessionDB)
 	h := authoriser(r)
 	http.ListenAndServe(":8080", h)
 }
