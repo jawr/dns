@@ -1,0 +1,9 @@
+{
+	"db_name": "dns",
+	"db_host": "/var/run/postgresql/",
+	"db_user": "",
+	"db_pass": "",
+	"zonefile_dir": "",
+	"session_secret": "makeasecret.keep.it.secret.keep.it.safe",
+	"session_name": "dnsauth"
+}
