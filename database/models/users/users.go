@@ -8,7 +8,7 @@ import (
 )
 
 type Settings struct {
-	IsAdmin bool `json:"is_admin"`
+	IsAdmin bool `json:"is_admin,omitempty"`
 }
 
 type User struct {

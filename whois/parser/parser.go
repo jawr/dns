@@ -21,6 +21,7 @@ var lock sync.Mutex
 func (p *Parser) Exec(d domains.Domain) (whois.Record, error) {
 	out, err := exec.Command("pwhois", "-j", d.String()).Output()
 	if err != nil {
+		log.Error("Whois error for " + d.String())
 		return whois.Record{}, err
 	}
 	w, err := whois.New(d, out)

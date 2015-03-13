@@ -4,12 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/jawr/dns/database/models/users"
-	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest/util"
 	"github.com/stathat/jconfig"
 	"github.com/yosssi/boltstore/store"
@@ -58,23 +56,32 @@ func CheckAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	args := strings.Split(string(data), ":")
-	fmt.Println(args)
-	if len(args) == 2 && users.CheckPassword(args[0], args[1]) {
+
+	if len(args) == 2 {
+		if checkUserIn(args[0], args[1], w, r) {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	} else {
+		util.Error(errors.New("Unable to authenticate."), w)
+	}
+}
+
+func checkUserIn(user, pass string, w http.ResponseWriter, r *http.Request) bool {
+	if users.CheckPassword(user, pass) {
 		session, err := GetSession(r)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return false
 		}
-		session.Values["expires"] = time.Now().Add(time.Minute * 10)
+		session.Values["expires"] = time.Now().Add(time.Hour * 24)
+		session.Values["user"] = user
 		if err := sessions.Save(r, w); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return false
 		}
-		w.WriteHeader(http.StatusOK)
-		return
+		return true
 	}
-	util.Error(errors.New("Unable to authenticate."), w)
-
+	return false
 }
 
 func New(db *bolt.DB) httpHandler {
@@ -95,9 +102,11 @@ func New(db *bolt.DB) httpHandler {
 					return
 				}
 				if t, ok := session.Values["expires"]; ok {
-					log.Info("Got existing cookie...")
-					if err == nil && time.Now().Before(t.(time.Time)) {
+					if time.Now().Before(t.(time.Time)) {
 						// authed
+						if u, ok := session.Values["user"]; ok {
+							w.Header().Set("X-User", u.(string))
+						}
 						w.Header().Set("X-Expires", t.(time.Time).String())
 						h.ServeHTTP(w, r)
 						return
@@ -105,14 +114,7 @@ func New(db *bolt.DB) httpHandler {
 				}
 				user, pass, ok := r.BasicAuth()
 				if ok {
-					log.Info("Got basic auth...")
-					if users.CheckPassword(user, pass) {
-						session.Values["expires"] = time.Now().Add(time.Minute * 10)
-						// save our session
-						if err := sessions.Save(r, w); err != nil {
-							util.Error(err, w)
-							return
-						}
+					if checkUserIn(user, pass, w, r) {
 						h.ServeHTTP(w, r)
 						return
 					}
@@ -129,4 +131,16 @@ func New(db *bolt.DB) httpHandler {
 
 func GetSession(r *http.Request) (*sessions.Session, error) {
 	return str.Get(r, sessionName)
+}
+
+func GetUser(r *http.Request) (*users.User, error) {
+	session, err := GetSession(r)
+	if err != nil {
+		return nil, err
+	}
+	if u, ok := session.Values["user"]; ok {
+		user, err := users.GetByEmail(u.(string)).One()
+		return &user, err
+	}
+	return nil, errors.New("unable to detect user")
 }

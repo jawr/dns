@@ -33,6 +33,10 @@ func GetByEmail(email string) Result {
 	return newResult(SELECT+"WHERE email = $1", email)
 }
 
+func GetByID(id int) Result {
+	return newResult(SELECT+"WHERE id = $1", id)
+}
+
 func parseRow(row connection.Row) (User, error) {
 	u := User{}
 	var settings []byte

@@ -75,7 +75,7 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	if len(where) > 0 {
 		query += "WHERE " + strings.Join(where, " AND ") + " "
 	}
-	query += fmt.Sprintf("LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	query += fmt.Sprintf("ORDER BY added DESC LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
 	args = append(args, limit, offset)
 	log.Info("Query: " + query)
 	log.Info("Args: %+v", args)

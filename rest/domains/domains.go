@@ -61,6 +61,22 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 			domainList, err := db.GetByJoinWhoisEmails(params.Get(k)).List()
 			util.ToJSON(domainList, err, w)
 			return
+		case "organization":
+			domainList, err := db.GetByJoinWhoisOrganizations(params.Get(k)).List()
+			util.ToJSON(domainList, err, w)
+			return
+		case "person_name":
+			domainList, err := db.GetByJoinWhoisNames(params.Get(k)).List()
+			util.ToJSON(domainList, err, w)
+			return
+		case "phone":
+			domainList, err := db.GetByJoinWhoisPhones(params.Get(k)).List()
+			util.ToJSON(domainList, err, w)
+			return
+		case "postcode":
+			domainList, err := db.GetByJoinWhoisPostcodes(params.Get(k)).List()
+			util.ToJSON(domainList, err, w)
+			return
 		case "name":
 			name := params.Get(k)
 			if strings.ContainsAny(name, ".") {

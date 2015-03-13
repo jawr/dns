@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jawr/dns/rest/auth"
 	"github.com/jawr/dns/rest/domains"
+	"github.com/jawr/dns/rest/notifications"
 	"github.com/jawr/dns/rest/records"
 	"github.com/jawr/dns/rest/watchers"
 	"github.com/jawr/dns/rest/whois"
@@ -29,6 +30,7 @@ func Setup() {
 	records.Setup(sr)
 	watchers.Setup(sr)
 	auth.Setup(sr)
+	notifications.Setup(sr)
 
 	// setup authoriser
 	authoriser := auth.New(sessionDB)

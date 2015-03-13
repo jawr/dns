@@ -29,16 +29,17 @@ func (p *Parser) Exec(d domains.Domain) ([]records.Record, error) {
 		if len(line) == 0 || line[0] == ';' {
 			continue
 		}
-		rr, err := records.New(line, origin, d.TLD, 86400, date)
+		rr, err := records.New(line, origin, d.TLD, 86400, date, 0)
 		if err != nil {
 			log.Error("%s: %s", line, err)
 			continue
 		}
 		err = rr.Insert()
 		if err != nil {
-			log.Error("%s: %s", line, err)
+			//log.Error("%s: %s", line, err)
 			continue
 		}
+		results = append(results, rr)
 	}
 	return results, nil
 }

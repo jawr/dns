@@ -2,6 +2,7 @@ package whois
 
 import (
 	"encoding/json"
+	"reflect"
 )
 
 type Data struct {
@@ -43,30 +44,68 @@ type Raw struct {
 	Contacts Contacts        `json:"contacts"`
 }
 
-func parseEmails(raw Raw) []string {
+func (r *Record) parseRaw(raw Raw) {
 	emails := make(map[string]bool)
+	organizations := make(map[string]bool)
+	phones := make(map[string]bool)
+	postcodes := make(map[string]bool)
+	names := make(map[string]bool)
+
+	v := reflect.ValueOf(raw.Contacts)
 	for _, v := range raw.Emails {
 		emails[v] = true
 	}
-	if raw.Contacts.Tech != nil && len(raw.Contacts.Tech.Email) > 0 {
-		emails[raw.Contacts.Tech.Email] = true
-	}
-	if raw.Contacts.Admin != nil && len(raw.Contacts.Admin.Email) > 0 {
-		emails[raw.Contacts.Admin.Email] = true
-	}
-	if raw.Contacts.Billing != nil && len(raw.Contacts.Billing.Email) > 0 {
-		emails[raw.Contacts.Billing.Email] = true
-	}
-	if raw.Contacts.Registrant != nil && len(raw.Contacts.Registrant.Email) > 0 {
-		emails[raw.Contacts.Registrant.Email] = true
-	}
 
-	var list = make([]string, 0)
-	for k, _ := range emails {
-		if k != "" {
-			list = append(list, k)
+	for i := 0; i < v.NumField(); i++ {
+		contact := v.Field(i).Interface().(*Contact)
+		if contact != nil {
+			cv := reflect.ValueOf(*contact)
+			for j := 0; j < cv.NumField(); j++ {
+				field := cv.Type().Field(j)
+				value := cv.Field(j).String()
+				if len(value) == 0 {
+					continue
+				}
+				switch field.Name {
+				case "Name":
+					names[value] = true
+				case "Email":
+					emails[value] = true
+				case "Phone":
+					phones[value] = true
+				case "Postalcode":
+					postcodes[value] = true
+				case "Organization":
+					organizations[value] = true
+				}
+			}
 		}
 	}
 
-	return list
+	// parse into slices
+	for k, _ := range emails {
+		if k != "" {
+			r.Emails = append(r.Emails, k)
+		}
+	}
+	for k, _ := range organizations {
+		if k != "" {
+			r.Organizations = append(r.Organizations, k)
+		}
+	}
+	for k, _ := range phones {
+		if k != "" {
+			r.Phones = append(r.Phones, k)
+		}
+	}
+	for k, _ := range postcodes {
+		if k != "" {
+			r.Postcodes = append(r.Postcodes, k)
+		}
+	}
+	for k, _ := range names {
+		if k != "" {
+			r.Names = append(r.Names, k)
+		}
+	}
 }

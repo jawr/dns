@@ -55,9 +55,20 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	var domain domains.Domain
 	var where []string
 	var args []interface{}
+	var orderBy string
 	i := 1
 	for k, _ := range params {
 		switch k {
+		case "orderBy":
+			orderBy = fmt.Sprintf("ORDER BY %s ", params.Get(k))
+			if v, ok := params["order"]; ok {
+				order := strings.ToLower(v[0])
+				if order == "desc" {
+					orderBy += "DESC "
+				} else if order == "asc" {
+					orderBy += "ASC "
+				}
+			}
 		case "uuid":
 			where = append(where, fmt.Sprintf(k+" = $%d", i))
 			args = append(args, params.Get(k))
@@ -78,8 +89,12 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 			}
 			domain, err = domains.GetByNameAndTLD(name, tld).One()
 			if err != nil {
-				util.Error(err, w)
-				return
+				domain = domains.New(name, tld)
+				err = domain.Insert()
+				if err != nil {
+					util.Error(err, w)
+					return
+				}
 			}
 			where = append(where, fmt.Sprintf("domain = $%d", i))
 			args = append(args, domain.UUID.String())
@@ -97,11 +112,17 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	if len(where) > 0 {
 		query += "WHERE " + strings.Join(where, " AND ") + " "
 	}
-	query += fmt.Sprintf("LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	if len(orderBy) > 0 {
+		query += orderBy + " "
+	}
+	query += fmt.Sprintf("ORDER BY added DESC LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
 	args = append(args, limit, offset)
 	log.Info("Query: " + query)
 	log.Info("Args: %+v", args)
 	recordList, err := db.GetList(query, args...)
+	if err != nil {
+		panic(err)
+	}
 	// check for non sql errors
 	// if we have no results dispatch a worker to get one
 	if len(recordList) == 0 {

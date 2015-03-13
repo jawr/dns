@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/jawr/dns/crawler"
 	"github.com/jawr/dns/database/models/tlds"
+	"github.com/jawr/dns/database/models/users"
 	"github.com/jawr/dns/log"
 	"github.com/jawr/dns/rest"
 	"github.com/jawr/dns/watcher"
@@ -23,8 +24,6 @@ func init() {
 }
 
 func main() {
-	//go parseZonefiles()
-	//go crawl()
 	go func() {
 		w, err := watcher.New()
 		if err != nil {

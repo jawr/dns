@@ -2,8 +2,10 @@ package watchers
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/domains"
+	"github.com/jawr/dns/database/models/users"
 	"github.com/jawr/dns/database/models/watchers/intervals"
 	"time"
 )
@@ -19,6 +21,7 @@ type Watcher struct {
 	Updated  time.Time          `json:"updated"`
 	Interval intervals.Interval `json:"interval"`
 	Logs     []Log              `json:"logs"`
+	Users    []users.User       `json:"users"`
 }
 
 func New(d domains.Domain, interval string) (Watcher, error) {
@@ -43,7 +46,7 @@ func New(d domains.Domain, interval string) (Watcher, error) {
 	if err != nil {
 		return w, err
 	}
-	return GetByDomain(d.UUID.String()).One()
+	return GetByDomain(d).One()
 }
 
 func (w *Watcher) Save() error {
@@ -57,6 +60,49 @@ func (w *Watcher) Save() error {
 	if err != nil {
 		return err
 	}
-	_, err = conn.Exec("UPDATE watcher SET updated = $1, logs = $2 WHERE id = $3", w.Updated, b, w.ID)
+	var usersArr []int32
+	for _, u := range w.Users {
+		usersArr = append(usersArr, u.ID)
+	}
+	b2, err := json.Marshal(usersArr)
+	if err != nil {
+		return err
+	}
+	_, err = conn.Exec("UPDATE watcher SET updated = $1, logs = $2, users = $3 WHERE id = $4", w.Updated, b, b2, w.ID)
 	return err
+}
+
+func (w *Watcher) AddUser(user users.User) {
+	for _, u := range w.Users {
+		if user.ID == u.ID {
+			return
+		}
+	}
+	w.Users = append(w.Users, user)
+}
+
+func (w *Watcher) AddUserByString(userStr string) {
+	user, err := users.GetByEmail(userStr).One()
+	if err != nil {
+		return
+	}
+	for _, u := range w.Users {
+		if user.ID == u.ID {
+			return
+		}
+	}
+	w.Users = append(w.Users, user)
+}
+
+func (w *Watcher) SetLowerInterval(intervalStr string) {
+	interval, err := intervals.GetByValue(intervalStr).One()
+	if err != nil {
+		interval, err = intervals.New(intervalStr)
+		if err != nil {
+			return
+		}
+	}
+	// BUG(setLowerInterval) implement this, make it sort intervals perhaps using the cache
+	// and set the watcher to use the smaller interval
+	fmt.Println("%s", interval.Value)
 }

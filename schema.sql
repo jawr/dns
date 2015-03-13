@@ -30,7 +30,7 @@ CREATE TABLE record (
 	uuid UUID,
 	domain UUID NOT NULL references domain(uuid),
 	name VARCHAR(255),
-	args jsonb,
+	args JSONB,
 	record_type INT NOT NULL references record_type(id),
 	parser_date DATE NOT NULL,
 	parser INT DEFAULT 0,
@@ -43,12 +43,16 @@ DROP SEQUENCE IF EXISTS whois_id CASCADE;
 CREATE TABLE whois (
 	id SERIAL,
 	domain UUID,
-	data jsonb,
-	raw_whois jsonb,
-	contacts jsonb,
-	emails jsonb,
+	data JSONB,
+	raw_whois JSONB,
+	contacts JSONB,
+	emails JSONB,
 	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	uuid UUID,
+	organizations JSONB,
+	phones JSONB,
+	postcodes JSONB,
+	names JSONB,
 	PRIMARY KEY (id)
 );
 
@@ -61,7 +65,7 @@ CREATE TABLE parser (
 	finished_at TIMESTAMP WITH TIME ZONE,
 	parser_date DATE NOT NULL,
 	tld INT NOT NULL references tld(id),
-	logs jsonb,
+	logs JSONB,
 	PRIMARY KEY (id),
 	UNIQUE (filename)
 );
@@ -83,7 +87,8 @@ CREATE TABLE watcher (
 	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	interval INT NOT NULL references interval(id),
-	logs jsonb DEFAULT '[]'::jsonb,
+	logs JSONB DEFAULT '[]'::JSONB,
+	users JSONB DEFAULT '[]'::JSONB,
 	PRIMARY KEY (id),
 	UNIQUE (domain)
 );
@@ -96,10 +101,21 @@ CREATE TABLE users (
 	password BYTEA,
 	added TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 	updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-	settings jsonb DEFAULT '{}'::jsonb,
+	settings JSONB DEFAULT '{}'::JSONB,
 	PRIMARY KEY (id),
 	UNIQUE (email)
 );
+
+DROP TABLE IF EXISTS notifications CASCADE;
+CREATE TABLE notification (
+	user_id INT,
+	messages JSONB DEFAULT '[]'::JSONB,
+	updated TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	alerts INT DEFAULT 0,
+	archived JSONB DEFAULT '[]'::JSONB,
+	UNIQUE (user_id)
+);
+
 
 CREATE OR REPLACE FUNCTION update_updated_column()
 	RETURNS TRIGGER
@@ -197,14 +213,32 @@ CREATE OR REPLACE FUNCTION insert_whois()
 	RETURNS TRIGGER
 	LANGUAGE plpgsql
 	AS $$
+	DECLARE
+		cnt INT;
 	BEGIN
-		PERFORM 1 FROM whois WHERE uuid = NEW.uuid AND added > now() - interval '1 day';
-		IF NOT FOUND THEN
-			RETURN NEW;
+		-- no need to keep an exact copy, we will keep check times in the watcher logs
+		-- PERFORM 1 FROM whois WHERE uuid = NEW.uuid AND added > now() - interval '1 day';
+		--PERFORM 1 FROM whois WHERE uuid = NEW.uuid;
+		WITH last (uuid, added) AS (
+			SELECT uuid, added FROM whois WHERE domain = NEW.domain ORDER BY added DESC LIMIT 1
+		) 
+		SELECT COUNT(*) INTO cnt FROM last JOIN whois ON last.added = whois.added WHERE last.uuid = NEW.uuid;
+		--RETURN CASE WHEN cnt > 0 THEN NEW ELSE NULL END;
+		IF cnt > 0 THEN
+			RETURN NULL;
 		END IF;
-		RETURN NULL;
+		RETURN NEW;
 	END;
 	$$;
+
+
+		WITH last (uuid, added) AS (
+			SELECT uuid, added FROM whois WHERE domain = 'e9f82e22-83b7-5eb9-88a4-f5f5e5e7f728' ORDER BY added DESC LIMIT 1
+		) 
+		SELECT COUNT(*) INTO count FROM last JOIN whois ON last.added = whois.added WHERE last.uuid != '9e2340fe-0ead-567d-81bc-34c66fc00c99'bbbbbbbbbbbbbbbbb;
+
+		RETURN CASE WHEN count > 0 THEN NEW ELSE NULL END;
+
 
 CREATE TRIGGER insert_whois_check BEFORE INSERT ON whois
 	FOR EACH ROW EXECUTE PROCEDURE insert_whois();

@@ -34,12 +34,11 @@ type Record struct {
 }
 
 // New creates a new Record, it takes the entire resource record line, the origin of the zonefile, the tld associated, the ttl and a parse date. It then creates a formalized Record.
-func New(line, origin string, tld tlds.TLD, ttl uint, date time.Time) (Record, error) {
+func New(line, origin string, tld tlds.TLD, ttl uint, date time.Time, parserID int32) (Record, error) {
 	fields := strings.Fields(line)
 	r := Record{}
 
-	origName := fields[0]
-	name := origName
+	name := fields[0]
 	// set origin if it's not already there
 	if !strings.HasSuffix(name, ".") {
 		name += "." + origin
@@ -47,8 +46,8 @@ func New(line, origin string, tld tlds.TLD, ttl uint, date time.Time) (Record, e
 	// strip domain name
 	name = domains.CleanDomain(name, tld)
 	r.Domain = domains.New(name, tld)
-	origName = strings.TrimSuffix(origName, ".")
-	name = strings.TrimSuffix(origName, r.Domain.TLD.Name)
+	name = strings.TrimSuffix(name, ".")
+	name = strings.TrimSuffix(name, r.Domain.TLD.Name)
 	name = strings.TrimSuffix(name, r.Domain.Name)
 	name = strings.TrimSuffix(name, ".")
 	// check if we are referencing top level
@@ -56,17 +55,16 @@ func New(line, origin string, tld tlds.TLD, ttl uint, date time.Time) (Record, e
 		name = "@"
 	}
 	r.Name = name
-	r.Args.TTL = ttl
 
 	typeIdx := 1
 	if len(fields) > 3 {
 		fields = util.FilterIN(fields)
 	}
 	if len(fields) > 3 {
-		ttl, err := strconv.ParseUint(fields[1], 10, 0)
+		ttlFromFields, err := strconv.ParseUint(fields[1], 10, 64)
 		if err == nil {
 			typeIdx = 2
-			r.Args.TTL = uint(ttl)
+			ttl = uint(ttlFromFields)
 		} else {
 			log.Warn("Unable to parse RR: len(fields) == %d, fields: %s", len(fields), fields)
 		}
@@ -80,10 +78,11 @@ func New(line, origin string, tld tlds.TLD, ttl uint, date time.Time) (Record, e
 	}
 	r.Type, err = types.New(rt, tld)
 	r.Args.Args = fields[typeIdx+1:]
-	r.Date = date
 	id := uuid.NewSHA1(uuid.NameSpace_OID, []byte(
-		fmt.Sprintf("%v", r),
+		fmt.Sprintf("%v%d", r, parserID),
 	))
+	r.Date = date
+	r.Args.TTL = ttl
 	r.UUID = id
 	r.Added = time.Now()
 	return r, nil

@@ -41,6 +41,32 @@ func GetByJoinWhoisEmails(email string) Result {
 	)
 }
 
+func GetByJoinWhoisOrganizations(organization string) Result {
+	return newResult(
+		"SELECT DISTINCT d.* FROM domain AS d JOIN whois w ON d.uuid = w.domain WHERE w.organizations ? $1",
+		organization,
+	)
+}
+
+func GetByJoinWhoisPostcodes(postcode string) Result {
+	return newResult(
+		"SELECT DISTINCT d.* FROM domain AS d JOIN whois w ON d.uuid = w.domain WHERE w.postcodes ? $1",
+		postcode,
+	)
+}
+func GetByJoinWhoisPhones(phone string) Result {
+	return newResult(
+		"SELECT DISTINCT d.* FROM domain AS d JOIN whois w ON d.uuid = w.domain WHERE w.phones ? $1",
+		phone,
+	)
+}
+func GetByJoinWhoisNames(name string) Result {
+	return newResult(
+		"SELECT DISTINCT d.* FROM domain AS d JOIN whois w ON d.uuid = w.domain WHERE w.names ? $1",
+		name,
+	)
+}
+
 func GetByNameAndTLD(name string, tld tlds.TLD) Result {
 	return newResult(
 		SELECT+"WHERE name = $1 AND tld = $2",

@@ -15,6 +15,7 @@ type Domain struct {
 }
 
 func New(name string, t tlds.TLD) Domain {
+	name = strings.ToLower(name)
 	name = CleanDomain(name, t)
 	args := strings.Split(name, ".")
 	name = args[len(args)-1]

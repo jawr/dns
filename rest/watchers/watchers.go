@@ -8,8 +8,10 @@ import (
 	"github.com/jawr/dns/database/models/tlds"
 	db "github.com/jawr/dns/database/models/watchers"
 	"github.com/jawr/dns/log"
+	"github.com/jawr/dns/rest/auth"
 	"github.com/jawr/dns/rest/paginator"
 	"github.com/jawr/dns/rest/util"
+	"github.com/jawr/dns/whois/dispatcher"
 	"net/http"
 	"net/url"
 	"strings"
@@ -51,6 +53,14 @@ func Search(w http.ResponseWriter, r *http.Request, params url.Values, limit, of
 	i := 1
 	for k, _ := range params {
 		switch k {
+		case "user":
+			user, err := auth.GetUser(r)
+			if err != nil {
+				util.Error(err, w)
+				return
+			}
+			where = append(where, fmt.Sprintf("users@> '[%d]'", user.ID))
+			i++
 		case "name":
 			where = append(where, fmt.Sprintf(k+" = $%d", i))
 			args = append(args, params.Get(k))
@@ -107,6 +117,23 @@ func Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	watcher, err := db.New(domain, post.Interval)
+	watcher, err := db.GetByDomain(domain).One()
+	if err != nil {
+		watcher, err = db.New(domain, post.Interval)
+		if err != nil {
+			util.Error(err, w)
+			return
+		}
+	}
+	watcher.SetLowerInterval(post.Interval)
+	user, err := auth.GetUser(r)
+	if err != nil {
+		util.Error(err, w)
+		return
+	}
+	watcher.AddUser(*user)
+	err = watcher.Save()
+	log.Info("%+v", watcher)
+	dispatcher.AddDomain(domain)
 	util.ToJSON(watcher, err, w)
 }

@@ -58,7 +58,7 @@ func (p *Parser) Close() {
 
 func (p *Parser) Parse() error {
 	defer p.Close()
-	defer util.Un(util.Trace())
+	defer util.Un(util.Trace("zonefile parser"))
 	ri, err := records.NewBulkInsert()
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (p *Parser) Parse() error {
 	var previous string
 	p.lineCount = 0
 	func() {
-		defer util.Un(util.Trace())
+		defer util.Un(util.Trace("zonefile parser scan file"))
 		for p.scanner.Scan() {
 			p.lineCount++
 			p.line = strings.ToLower(p.scanner.Text())
@@ -250,7 +250,7 @@ func (p *Parser) handleVariable(line string) {
 }
 
 func (p *Parser) handleLine(line string) {
-	rr, err := records.New(line, p.origin, p.TLD, p.ttl, p.Date)
+	rr, err := records.New(line, p.origin, p.TLD, p.ttl, p.Date, p.ID)
 	if err != nil {
 		log.Warn("handleLine:getRecord: %s", err)
 		log.Warn("handleLine:line: %s", line)

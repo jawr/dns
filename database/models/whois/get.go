@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/jawr/dns/database/connection"
 	"github.com/jawr/dns/database/models/domains"
+	"strings"
 )
 
 const (
@@ -12,12 +13,23 @@ const (
 )
 
 type Result struct {
-	One  func() (Record, error)
-	List func() ([]Record, error)
+	Count func() (int, error)
+	One   func() (Record, error)
+	List  func() ([]Record, error)
 }
 
 func newResult(query string, args ...interface{}) Result {
 	return Result{
+		func() (int, error) {
+			var count int
+			conn, err := connection.Get()
+			if err != nil {
+				return count, err
+			}
+			query = strings.Replace(query, "SELECT *", "SELECT COUNT(*)", 1)
+			err = conn.QueryRow(query, args...).Scan(&count)
+			return count, err
+		},
 		func() (Record, error) {
 			return Get(query, args...)
 		},
@@ -46,12 +58,41 @@ func GetByDomain(domain domains.Domain) Result {
 func parseRow(row connection.Row) (Record, error) {
 	w := Record{}
 	var duuid, wuuid string
-	var b []byte
-	err := row.Scan(&w.ID, &duuid, &w.Data, &w.Raw, &w.Contacts, &b, &w.Added, &wuuid)
+	var emails, organizations, phones, postcodes, names []byte
+	err := row.Scan(
+		&w.ID,
+		&duuid,
+		&w.Data,
+		&w.Raw,
+		&w.Contacts,
+		&emails,
+		&w.Added,
+		&wuuid,
+		&organizations,
+		&phones,
+		&postcodes,
+		&names,
+	)
 	if err != nil {
 		return w, err
 	}
-	err = json.Unmarshal(b, &w.Emails)
+	err = json.Unmarshal(emails, &w.Emails)
+	if err != nil {
+		return w, err
+	}
+	err = json.Unmarshal(organizations, &w.Organizations)
+	if err != nil {
+		return w, err
+	}
+	err = json.Unmarshal(phones, &w.Phones)
+	if err != nil {
+		return w, err
+	}
+	err = json.Unmarshal(postcodes, &w.Postcodes)
+	if err != nil {
+		return w, err
+	}
+	err = json.Unmarshal(names, &w.Emails)
 	if err != nil {
 		return w, err
 	}

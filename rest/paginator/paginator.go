@@ -33,3 +33,34 @@ func Paginate(fn func(http.ResponseWriter, *http.Request, url.Values, int, int))
 		fn(w, r, params, limit, offset)
 	}
 }
+
+/* Extend paginate to build the query using the below pattern
+package main
+
+import "fmt"
+
+func main() {
+	var results []string
+	var err error
+	fn := func(query string, args ...interface{}) {
+		results, err = GetList(query, args...)
+	}
+	switchFn := func(query *string) {
+		*query += " SOME GENERATED STUFF"
+	}
+	buildQuery(fn, switchFn)
+	fmt.Println(results)
+	fmt.Println(err)
+}
+
+func buildQuery(fn func(string, ...interface{}), switchFn func(*string)) {
+	query := "SELECT * FROM "
+	switchFn(&query)
+	fn(query)
+}
+
+func GetList(query string, args ...interface{}) ([]string, error) {
+	return []string{query}, nil
+}
+
+*/
